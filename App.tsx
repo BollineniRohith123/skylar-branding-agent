@@ -53,6 +53,11 @@ const generateWithRetry = async (
         // Clean up generic wrapper message from geminiService
         finalMessage = finalMessage.replace('Failed to generate image: ', '');
       }
+
+      // If it's a quota/rate limit error, provide more specific guidance
+      if (finalMessage.toLowerCase().includes('all api keys exhausted')) {
+        finalMessage = "Service temporarily unavailable. Please wait a few minutes before trying again.";
+      }
     }
   }
 };
@@ -143,29 +148,60 @@ const App: React.FC = () => {
     liveSessionRef.current.results = newResults;
 
     const processProduct = async (product: Product) => {
-        const result = await generateWithRetry(logo, product);
-        
-        setGenerationResults(prev => ({ ...prev, [product.id]: result }));
-        liveSessionRef.current.results = { ...liveSessionRef.current.results, [product.id]: result };
+        try {
+            const result = await generateWithRetry(logo, product);
 
-        setHistory(prevHistory => {
-            const newHistory = [...prevHistory];
-            const itemToUpdate = newHistory.find(item => item.id === newHistoryItem.id);
-            if (itemToUpdate) {
-                itemToUpdate.results[product.id] = result;
-            }
-            return newHistory;
-        });
+            setGenerationResults(prev => ({ ...prev, [product.id]: result }));
+            liveSessionRef.current.results = { ...liveSessionRef.current.results, [product.id]: result };
+
+            setHistory(prevHistory => {
+                const newHistory = [...prevHistory];
+                const itemToUpdate = newHistory.find(item => item.id === newHistoryItem.id);
+                if (itemToUpdate) {
+                    itemToUpdate.results[product.id] = result;
+                }
+                return newHistory;
+            });
+        } catch (error) {
+            // Handle errors gracefully - don't let one failed product break the entire batch
+            const errorMessage = error instanceof Error ? error.message : 'Generation failed';
+            const errorResult: GenerationResult = {
+                status: 'error',
+                imageUrl: null,
+                error: errorMessage
+            };
+
+            setGenerationResults(prev => ({ ...prev, [product.id]: errorResult }));
+            liveSessionRef.current.results = { ...liveSessionRef.current.results, [product.id]: errorResult };
+
+            setHistory(prevHistory => {
+                const newHistory = [...prevHistory];
+                const itemToUpdate = newHistory.find(item => item.id === newHistoryItem.id);
+                if (itemToUpdate) {
+                    itemToUpdate.results[product.id] = errorResult;
+                }
+                return newHistory;
+            });
+
+            console.error(`Failed to generate image for ${product.name}:`, error);
+        }
     };
 
-    // Increased batch size for faster generation with multiple API keys
-    const batchSize = 10;
-    for (let i = 0; i < ALL_PRODUCTS.length; i += batchSize) {
-        const batch = ALL_PRODUCTS.slice(i, i + batchSize);
-        await Promise.all(batch.map(processProduct));
+    try {
+        // Increased batch size for faster generation with multiple API keys
+        const batchSize = 10;
+        for (let i = 0; i < ALL_PRODUCTS.length; i += batchSize) {
+            const batch = ALL_PRODUCTS.slice(i, i + batchSize);
+            await Promise.all(batch.map(processProduct));
+        }
+    } catch (error) {
+        // This should not happen since processProduct handles errors internally,
+        // but adding this as a safety net
+        console.error("Unexpected error in batch processing:", error);
+    } finally {
+        // Always ensure isGenerating is set to false
+        setIsGenerating(false);
     }
-
-    setIsGenerating(false);
   }, []);
 
   const handleRegenerateImage = useCallback(async (productId: ProductType) => {
@@ -176,20 +212,45 @@ const App: React.FC = () => {
 
     setGenerationResults(prev => ({ ...prev, [productId]: { status: 'loading', imageUrl: null, error: null } }));
 
-    const result = await generateWithRetry(userLogoBase64, product);
+    try {
+        const result = await generateWithRetry(userLogoBase64, product);
 
-    setGenerationResults(prev => ({ ...prev, [productId]: result }));
-    liveSessionRef.current.results = { ...liveSessionRef.current.results, [productId]: result };
+        setGenerationResults(prev => ({ ...prev, [productId]: result }));
+        liveSessionRef.current.results = { ...liveSessionRef.current.results, [productId]: result };
 
-    setHistory(prevHistory => {
-        if (prevHistory.length === 0) return prevHistory;
-        const newHistory = [...prevHistory];
-        const latestHistoryItem = newHistory[0];
-        if (latestHistoryItem) {
-            latestHistoryItem.results[productId] = result;
-        }
-        return newHistory;
-    });
+        setHistory(prevHistory => {
+            if (prevHistory.length === 0) return prevHistory;
+            const newHistory = [...prevHistory];
+            const latestHistoryItem = newHistory[0];
+            if (latestHistoryItem) {
+                latestHistoryItem.results[productId] = result;
+            }
+            return newHistory;
+        });
+    } catch (error) {
+        // Handle errors gracefully for individual regeneration
+        const errorMessage = error instanceof Error ? error.message : 'Regeneration failed';
+        const errorResult: GenerationResult = {
+            status: 'error',
+            imageUrl: null,
+            error: errorMessage
+        };
+
+        setGenerationResults(prev => ({ ...prev, [productId]: errorResult }));
+        liveSessionRef.current.results = { ...liveSessionRef.current.results, [productId]: errorResult };
+
+        setHistory(prevHistory => {
+            if (prevHistory.length === 0) return prevHistory;
+            const newHistory = [...prevHistory];
+            const latestHistoryItem = newHistory[0];
+            if (latestHistoryItem) {
+                latestHistoryItem.results[productId] = errorResult;
+            }
+            return newHistory;
+        });
+
+        console.error(`Failed to regenerate image for ${product.name}:`, error);
+    }
   }, [userLogoBase64, viewingHistoryId]);
 
 

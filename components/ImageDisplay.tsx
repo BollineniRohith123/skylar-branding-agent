@@ -27,36 +27,28 @@ const CardLoader: React.FC = () => (
     </div>
 );
 
-const CardError: React.FC<{ error: string | null }> = ({ error }) => {
+const CardError: React.FC<{ error: string | null; onRetry?: () => void }> = ({ error, onRetry }) => {
     const isHighDemandError = error?.toLowerCase().includes('heavy traffic');
-    const isRateLimitError = error?.toLowerCase().includes('api keys exhausted') || error?.toLowerCase().includes('quota');
-    const isRetryError = error?.toLowerCase().includes('click regenerate');
-
-    let title = "Generation Failed";
-    let message = error || "An unknown error occurred";
-    let bgColor = "bg-red-900 bg-opacity-80";
-    let textColor = "text-red-200";
-
-    if (isHighDemandError) {
-        title = "Skylar is working on it";
-        bgColor = "bg-amber-900 bg-opacity-80";
-        textColor = "text-amber-200";
-    } else if (isRateLimitError) {
-        title = "Service Temporarily Unavailable";
-        message = "Please wait a moment and try again";
-        bgColor = "bg-amber-900 bg-opacity-80";
-        textColor = "text-amber-200";
-    } else if (isRetryError) {
-        title = "Ready to Retry";
-        message = "Click the refresh button to try again";
-        bgColor = "bg-blue-900 bg-opacity-80";
-        textColor = "text-blue-200";
-    }
+    const isRetryableError = error?.toLowerCase().includes('try after sometime') || error?.toLowerCase().includes('confused');
+    const title = isHighDemandError ? "Skylar is working on it" : "Generation Failed";
+    const bgColor = isHighDemandError ? "bg-amber-900 bg-opacity-80" : "bg-red-900 bg-opacity-80";
+    const textColor = isHighDemandError ? "text-amber-200" : "text-red-200";
 
     return (
         <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 text-center p-2 rounded-lg ${bgColor}`}>
-            <h3 className="text-md font-bold text-white">{title}</h3>
-            <p className={`mt-1 text-xs line-clamp-3 ${textColor}`}>{message}</p>
+            <h3 className="text-md font-bold text-white mb-2">{title}</h3>
+            <p className={`text-xs line-clamp-3 ${textColor} mb-3`}>{error}</p>
+            {isRetryableError && onRetry && (
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onRetry();
+                    }}
+                    className="px-3 py-1 bg-white bg-opacity-20 text-white text-xs rounded hover:bg-opacity-30 transition-all duration-200"
+                >
+                    Retry
+                </button>
+            )}
         </div>
     );
 };
@@ -107,7 +99,7 @@ const ImageCard: React.FC<{
         >
             <div className={`relative aspect-video bg-gray-800 ${isClickable ? 'cursor-pointer' : ''}`}>
                 {status === 'loading' && <CardLoader />}
-                {status === 'error' && <CardError error={error} />}
+                {status === 'error' && <CardError error={error} onRetry={() => onRegenerate(product.id)} />}
                 
                 {imageUrl ? (
                     <>

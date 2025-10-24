@@ -27,30 +27,11 @@ const CardLoader: React.FC = () => (
     </div>
 );
 
-const CardError: React.FC<{ error: string | null; onRetry?: () => void }> = ({ error, onRetry }) => {
-    const isHighDemandError = error?.toLowerCase().includes('heavy traffic');
-    const isRetryableError = error?.toLowerCase().includes('try after sometime') || error?.toLowerCase().includes('confused');
-    const title = isHighDemandError ? "Skylar is working on it" : "Generation Failed";
-    const bgColor = isHighDemandError ? "bg-amber-900 bg-opacity-80" : "bg-red-900 bg-opacity-80";
-    const textColor = isHighDemandError ? "text-amber-200" : "text-red-200";
-
-    return (
-        <div className={`absolute inset-0 flex flex-col items-center justify-center z-20 text-center p-2 rounded-lg ${bgColor}`}>
-            <h3 className="text-md font-bold text-white mb-2">{title}</h3>
-            <p className={`text-xs line-clamp-3 ${textColor} mb-3`}>{error}</p>
-            {isRetryableError && onRetry && (
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onRetry();
-                    }}
-                    className="px-3 py-1 bg-white bg-opacity-20 text-white text-xs rounded hover:bg-opacity-30 transition-all duration-200"
-                >
-                    Retry
-                </button>
-            )}
-        </div>
-    );
+// CardError component is now hidden - errors are handled silently with automatic retries
+// This ensures users never see error messages during image generation
+const CardError: React.FC<{ error: string | null; onRetry?: () => void }> = () => {
+    // Silently suppress all error displays - the retry logic handles failures automatically
+    return null;
 };
 
 
@@ -61,7 +42,7 @@ const ImageCard: React.FC<{
     onRegenerate: (productId: ProductType) => void;
     isRegenerationAllowed: boolean;
 }> = ({ product, result, onImageClick, onRegenerate, isRegenerationAllowed }) => {
-    const { status, imageUrl, error } = result;
+    const { status, imageUrl } = result;
 
     const handleDownload = (e: React.MouseEvent) => {
         e.stopPropagation(); 
@@ -83,9 +64,11 @@ const ImageCard: React.FC<{
     }
 
     const isClickable = status === 'success' && imageUrl;
-    
+    // Treat error status as loading to keep showing loading state instead of error message
+    const displayStatus = status === 'error' ? 'loading' : status;
+
     return (
-        <div 
+        <div
             className="bg-gray-900 rounded-lg shadow-2xl overflow-hidden flex flex-col transform hover:-translate-y-1 transition-transform duration-300 group"
             onClick={() => isClickable && onImageClick(imageUrl)}
             role={isClickable ? 'button' : undefined}
@@ -98,15 +81,14 @@ const ImageCard: React.FC<{
             }}
         >
             <div className={`relative aspect-video bg-gray-800 ${isClickable ? 'cursor-pointer' : ''}`}>
-                {status === 'loading' && <CardLoader />}
-                {status === 'error' && <CardError error={error} onRetry={() => onRegenerate(product.id)} />}
-                
+                {displayStatus === 'loading' && <CardLoader />}
+
                 {imageUrl ? (
                     <>
-                        <img 
+                        <img
                             src={imageUrl}
                             alt={product.name}
-                            className={`object-cover w-full h-full transition-opacity duration-500 ${status === 'loading' ? 'opacity-30' : 'opacity-100'}`}
+                            className={`object-cover w-full h-full transition-opacity duration-500 ${displayStatus === 'loading' ? 'opacity-30' : 'opacity-100'}`}
                         />
                         {status === 'success' && (
                             <div className="absolute top-3 right-3 z-20 flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

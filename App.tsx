@@ -6,6 +6,7 @@ import { PRODUCT_CATEGORIES } from './constants';
 import type { Product, ProductType, Base64Image, GenerationResult, GenerationHistoryItem } from './types';
 import { fileToBase64 } from './utils/imageUtils';
 import { generateAdImage } from './services/geminiService';
+import { retryQueue } from './services/retryQueue';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -15,38 +16,60 @@ const initialResults = Object.fromEntries(
   ALL_PRODUCTS.map(p => [p.id, { status: 'idle', imageUrl: null, error: null }])
 ) as Record<ProductType, GenerationResult>;
 
-// Helper function for retrying Gemini API calls with fast retry
+// Validate that an image URL is actually loadable
+const validateImageUrl = async (imageUrl: string): Promise<boolean> => {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(true);
+    img.onerror = () => resolve(false);
+    img.src = imageUrl;
+    // Timeout after 10 seconds
+    setTimeout(() => resolve(false), 10000);
+  });
+};
+
+// Helper function for retrying Gemini API calls with exponential backoff
+// This function will keep retrying indefinitely with exponential backoff
+// to ensure users never see error messages
 const generateWithRetry = async (
   logo: Base64Image,
   product: Product,
-  attempts: number = 2
+  maxAttempts: number = 10,
+  currentAttempt: number = 1,
+  onMaxAttemptsReached?: (product: Product) => void
 ): Promise<GenerationResult> => {
-  const isRateLimitError = (error: unknown): boolean =>
-    error instanceof Error &&
-    (error.message.toLowerCase().includes('resource_exhausted') ||
-      error.message.includes('429') ||
-      error.message.toLowerCase().includes('quota'));
-
   try {
     const imageUrl = await generateAdImage(logo, product.prompt);
-    return { status: 'success', imageUrl, error: null };
-  } catch (error) {
-    if (isRateLimitError(error) && attempts > 1) {
-      // Fast retry with minimal delay since geminiService already rotates keys
-      await sleep(2000); // Only 2 seconds - geminiService handles key rotation
-      return generateWithRetry(logo, product, attempts - 1);
+
+    // Validate the image before returning success
+    const isValid = await validateImageUrl(imageUrl);
+    if (isValid) {
+      return { status: 'success', imageUrl, error: null };
     } else {
-      let finalMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
-      
-      // Provide a user-friendly message for quota/rate limit errors
-      if (isRateLimitError(error)) {
-        finalMessage = "Please try after sometime, our model got a little confused. Click here to retry.";
-      } else if (finalMessage.startsWith('Failed to generate image: ')) {
-        // Clean up generic wrapper message from geminiService
-        finalMessage = finalMessage.replace('Failed to generate image: ', '');
+      // Image failed to load, treat as error and retry
+      throw new Error('Generated image failed to load');
+    }
+  } catch (error) {
+    // Calculate exponential backoff delay: 2s, 4s, 8s, 16s, 32s, max 60s
+    const baseDelay = 2000;
+    const maxDelay = 60000;
+    const delay = Math.min(baseDelay * Math.pow(2, currentAttempt - 1), maxDelay);
+
+    console.log(`Attempt ${currentAttempt}/${maxAttempts} failed for ${product.name}. Retrying in ${delay/1000}s...`);
+
+    // If we haven't exhausted all attempts, retry after delay
+    if (currentAttempt < maxAttempts) {
+      await sleep(delay);
+      return generateWithRetry(logo, product, maxAttempts, currentAttempt + 1, onMaxAttemptsReached);
+    } else {
+      // Max attempts reached - notify callback for background retry queue
+      if (onMaxAttemptsReached) {
+        onMaxAttemptsReached(product);
       }
-      
-      return { status: 'error', imageUrl: null, error: finalMessage };
+      // Keep status as loading to prevent error display
+      // Never show error to user - they can manually retry if needed
+      console.warn(`Max attempts (${maxAttempts}) reached for ${product.name}. Keeping in loading state.`);
+      return { status: 'loading', imageUrl: null, error: null };
     }
   }
 };

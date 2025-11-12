@@ -38,6 +38,17 @@ function isRateLimitError(error: unknown): boolean {
   );
 }
 
+// Check if error is a timeout or connection error
+function isTimeoutError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const errorMsg = error.message.toLowerCase();
+  return (
+    errorMsg.includes('timeout') ||
+    errorMsg.includes('connection') ||
+    errorMsg.includes('network')
+  );
+}
+
 export async function generateAdImage(
   logoImage: Base64Image,
   prompt: string
@@ -51,7 +62,13 @@ export async function generateAdImage(
       const apiKey = getNextApiKey();
       const ai = new GoogleGenAI({ apiKey });
       
-      const response = await ai.models.generateContent({
+      // Create a timeout promise
+      const timeout = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout after 60 seconds')), 60000)
+      );
+      
+      // Race between API call and timeout
+      const responsePromise = ai.models.generateContent({
         model: model,
         contents: {
           parts: [
@@ -63,6 +80,8 @@ export async function generateAdImage(
           responseModalities: [Modality.IMAGE],
         },
       });
+      
+      const response = await Promise.race([responsePromise, timeout]) as any;
 
       for (const part of response.candidates[0].content.parts) {
         if (part.inlineData) {
@@ -75,13 +94,14 @@ export async function generateAdImage(
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
       
-      // If it's a rate limit error and we have more keys to try, continue to next key
-      if (isRateLimitError(error) && attempt < API_KEYS.length - 1) {
-        console.warn(`Rate limit hit on API key ${attempt + 1}/${API_KEYS.length}, trying next key...`);
+      // If it's a rate limit or timeout error and we have more keys to try, continue to next key
+      if ((isRateLimitError(error) || isTimeoutError(error)) && attempt < API_KEYS.length - 1) {
+        const errorType = isRateLimitError(error) ? 'Rate limit' : 'Timeout';
+        console.warn(`${errorType} hit on API key ${attempt + 1}/${API_KEYS.length}, trying next key...`);
         continue;
       }
       
-      // For non-rate-limit errors or last key, throw immediately
+      // For non-recoverable errors or last key, throw immediately
       console.error("Error generating ad image:", error);
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
       throw new Error(`Failed to generate image: ${errorMessage}`);

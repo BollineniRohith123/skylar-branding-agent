@@ -64,8 +64,8 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
       },
       {
         id: 'boarding-pass',
-        name: 'Digital Boarding Pass',
-        prompt: "Create a hyper-realistic, close-up 'point-of-view' shot of a person holding a smartphone. On the bright screen, a digital boarding pass for an Indian airline is displayed. A prominent banner ad with the provided logo is seamlessly integrated into the pass UI. The shot is so detailed that you can see fingerprints on the screen and the texture of the person's hand. The background is the soft-focus, bustling environment of an airport departure lounge. The image must feel immediate, personal, and completely authentic.",
+        name: 'Boarding Pass Advertisement',
+        prompt: "Generate a realistic photograph of a physical Indian airline boarding pass (Air India, IndiGo, SpiceJet, or Vistara) lying on a surface with natural lighting. Show the back side of the boarding pass prominently. Place the uploaded logo in the center of the back side of the boarding pass, scaled appropriately to fit within the available space while maintaining proper proportions. The logo should appear as a printed advertisement on the physical boarding pass, similar to real airline promotional partnerships. Include typical Indian boarding pass elements like barcode, airline branding on edges, paper texture, and any Hindi/English text. Ensure the logo is clearly visible, properly aligned, and looks professionally printed as part of the boarding pass design. The composition should show the physical boarding pass at a slight angle with realistic shadows and lighting to emphasize its tangible nature. The boarding pass should clearly be from an Indian airline with Indian airport codes (DEL, BOM, BLR, etc.).",
         icon: TicketIcon,
       },
       {
@@ -125,6 +125,12 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
         name: 'Metro Platform Ad',
         prompt: "Craft a sharp, atmospheric, ultra-realistic photograph of a glowing digital advertising panel on a pristine Hyderabad Metro platform. The shot is at human eye-level, showing the ad, which features the provided logo, with stunning clarity. The polished granite floor reflects the panel's light and the cool, ambient lighting of the station. In the background, the blurred shape of an arriving train adds depth and a sense of anticipation. The image should feel clean, modern, and sophisticated, perfectly capturing the experience of a commuter in a world-class Indian metro.",
         icon: MetroIcon,
+      },
+      {
+        id: 'car-wrap',
+        name: 'Car Wrap Advertisement',
+        prompt: "Generate a realistic photograph of a modern car popular in India (such as Maruti Suzuki, Hyundai, or Tata) in side view, parked in an Indian urban setting (Indian city street, market area, or commercial district) with natural lighting. Apply the uploaded logo prominently on the car door as a large, professional advertisement wrap. The logo should be centered on the door panel, scaled appropriately to fit the door's dimensions while maintaining correct proportions and aspect ratio. The wrap should follow the natural contours and curves of the car door seamlessly. Surround the logo with complementary design elements, gradient backgrounds, or subtle product imagery that matches the brand's color scheme, similar to professional vehicle branding campaigns seen in Indian cities. Ensure the wrap does not cover windows, door handles, mirrors, or wheels. The advertisement should look like a real-world vehicle wrap with vivid colors, proper lighting reflections on the car's surface, and authentic branding that appears professionally installed. The background should clearly show Indian context (Indian architecture, signage in Hindi/regional languages, Indian street elements). The overall composition should showcase the logo as the focal point of a striking road marketing campaign in India.",
+        icon: BusIcon,
       },
     ]
   },

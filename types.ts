@@ -1,10 +1,10 @@
 // FIX: Changed type-only import of React to a full import to make the JSX namespace available.
 import React from 'react';
 
-export type ProductType = 
-  | 'aircraft-exterior' 
-  | 'seat-headrest' 
-  | 'airport-trolley' 
+export type ProductType =
+  | 'aircraft-exterior'
+  | 'seat-headrest'
+  | 'airport-trolley'
   | 'unipole-billboard'
   | 'street-hoarding'
   | 'bus-wrap'
@@ -21,7 +21,8 @@ export type ProductType =
   | 'meal-tray'
   | 'skyline-panel'
   | 'road-median'
-  | 'auto-canopy';
+  | 'auto-canopy'
+  | 'car-wrap';
 
 export interface Product {
   id: ProductType;

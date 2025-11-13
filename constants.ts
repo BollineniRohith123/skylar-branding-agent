@@ -1,20 +1,22 @@
 import type { ProductCategory } from './types';
-import { 
-  PlaneIcon, 
-  SeatIcon, 
-  BillboardIcon, 
-  BusIcon, 
-  MetroIcon, 
-  AirportTerminalIcon, 
-  TicketIcon, 
-  ShoppingMallIcon, 
-  LuggageIcon, 
+import {
+  PlaneIcon,
+  SeatIcon,
+  BillboardIcon,
+  BusIcon,
+  MetroIcon,
+  AirportTerminalIcon,
+  TicketIcon,
+  ShoppingMallIcon,
+  LuggageIcon,
   LadderIcon,
   TrolleyIcon,
   MealTrayIcon,
   SkylinePanelIcon,
   RoadMedianIcon,
-  CanopyIcon
+  CanopyIcon,
+  UnipoleIcon,
+  BridgeIcon
 } from './components/icons';
 
 export const PRODUCT_CATEGORIES: ProductCategory[] = [
@@ -65,7 +67,7 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
       {
         id: 'boarding-pass',
         name: 'Boarding Pass Advertisement',
-        prompt: "Generate a realistic photograph of a physical Indian airline boarding pass (Air India, IndiGo, SpiceJet, or Vistara) lying on a surface with natural lighting. Show the back side of the boarding pass prominently. Place the uploaded logo in the center of the back side of the boarding pass, scaled appropriately to fit within the available space while maintaining proper proportions. The logo should appear as a printed advertisement on the physical boarding pass, similar to real airline promotional partnerships. Include typical Indian boarding pass elements like barcode, airline branding on edges, paper texture, and any Hindi/English text. Ensure the logo is clearly visible, properly aligned, and looks professionally printed as part of the boarding pass design. The composition should show the physical boarding pass at a slight angle with realistic shadows and lighting to emphasize its tangible nature. The boarding pass should clearly be from an Indian airline with Indian airport codes (DEL, BOM, BLR, etc.).",
+        prompt: "Create an ultra-realistic, professional photograph of a physical Indian airline boarding pass (Air India, IndiGo, SpiceJet, or Vistara) being held by human hands against a clean, modern airport background. The boarding pass should be positioned at a slight angle showing the back side prominently, with the uploaded logo professionally printed as a high-quality advertisement in the center. The hands should be well-manicured and positioned naturally, holding the boarding pass securely. Include authentic details like the barcode, airline branding on edges, paper texture, flight information, and Hindi/English text. The lighting should be bright airport lighting with soft shadows, creating a premium, professional atmosphere. The composition should emphasize the tangible, high-quality nature of the boarding pass advertisement, making it look like a real promotional partnership. The boarding pass must clearly show Indian airline branding with Indian airport codes (DEL, BOM, BLR, etc.).",
         icon: TicketIcon,
       },
       {
@@ -100,8 +102,20 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
       {
         id: 'road-median',
         name: 'Road Median Ad',
-        prompt: 'Create a dynamic, ultra-realistic photograph of a central road median on a busy street in Bengaluru during the post-monsoon evening glow. The sky is a deep indigo. The median is lined with glowing "lollipop" advertising signs. The focus is on one sign, brilliantly illuminated from within, showcasing a crisp ad with the provided logo. Use a long exposure to capture dramatic light trails from the headlights and taillights of passing traffic, conveying a sense of vibrant, urban motion. The image must feel alive with the energy of a city that never stops.',
+        prompt: 'Create a clean, ultra-realistic photograph of a straight, properly proportioned road median advertising sign on a busy Bengaluru street during golden hour. The sign should be perfectly vertical and appropriately sized - not too tall or tilted. The focus is on a single, well-lit advertising panel showcasing a crisp ad with the provided logo. The sign should have a modern, professional appearance with clean lines and proper proportions. The background shows a typical Indian urban street with soft, warm lighting from street lamps and passing vehicles. The composition should be straight-on, showing the sign clearly without any tilting or distortion. The image must convey professionalism and modern urban advertising, with the logo clearly visible and properly integrated into the sign design.',
         icon: RoadMedianIcon,
+      },
+      {
+        id: 'unipole-media',
+        name: 'Unipole Media',
+        prompt: "Generate a stunning, ultra-realistic photograph of a modern unipole advertising structure on a busy Mumbai highway. The unipole should be a sleek, vertical advertising column with a digital screen or high-quality printed advertisement featuring the provided logo. The structure should be contemporary and well-designed, standing prominently beside the road. The shot should be taken during late afternoon with golden lighting, showing the unipole in sharp focus against a clear sky. Include realistic details like the metallic finish of the structure, proper proportions (not too tall or distorted), and professional installation. The background should show a typical Indian highway with passing vehicles and urban infrastructure. The image must convey modern, high-end outdoor advertising with the logo clearly visible and professionally integrated into the design.",
+        icon: UnipoleIcon,
+      },
+      {
+        id: 'facade-bridge',
+        name: 'Facade/Bridge Media',
+        prompt: "Create a dynamic, ultra-realistic photograph of a large advertising facade on a flyover or bridge structure in Delhi or Mumbai. The advertisement should be prominently displayed on the side of the bridge or flyover, covering a significant portion of the concrete structure. The provided logo should be featured as a major element in a professional, high-impact advertisement design. The shot should be taken from street level looking up at the bridge, showing the scale and prominence of the advertising. Include realistic details like the concrete texture of the bridge, proper lighting from street lamps and vehicle headlights, and the urban environment below. The advertisement should look like a real-world bridge advertising campaign with vivid colors, proper proportions, and professional installation. The overall composition should emphasize the massive scale and visibility of bridge advertising in Indian cities.",
+        icon: BridgeIcon,
       },
     ]
   },
@@ -140,7 +154,7 @@ export const PRODUCT_CATEGORIES: ProductCategory[] = [
       {
         id: 'shopping-mall',
         name: 'Shopping Mall Ad',
-        prompt: "Generate a vibrant, high-end photorealistic image from the atrium of a luxurious Indian shopping mall like DLF Emporio, New Delhi. The camera is positioned on an upper level, looking down at a massive, suspended digital screen. The screen is displaying a stunning, high-resolution advertisement featuring the provided logo. The mall is filled with well-dressed shoppers, and the bright, sophisticated lighting reflects off polished marble floors and chrome railings. The final image must feel aspirational and premium, capturing the dynamic energy of luxury retail in India.",
+        prompt: "Create an ultra-realistic, professional photograph from the stunning atrium of DLF Emporio, New Delhi, during peak evening hours. The camera is positioned on the second-floor balcony, capturing a dramatic downward angle at a massive 15-foot LED digital screen suspended from the ceiling. The screen displays a crystal-clear, high-resolution advertisement featuring the provided logo with perfect color saturation and brightness. The mall's architecture features soaring glass ceilings, polished Italian marble floors that reflect the ambient lighting, and gleaming chrome railings. The atrium is bustling with affluent Indian shoppers - families in designer clothing, young professionals, and couples - all moving naturally through the space. The lighting is a sophisticated mix of warm LED strips, natural skylight filtering through the glass ceiling, and the screen's vibrant glow creating beautiful reflections on the marble floors. Include realistic details like shop windows displaying luxury brands, people using escalators, security personnel, and the authentic atmosphere of a premium Indian shopping destination. The composition should emphasize the scale and grandeur of the space while making the advertisement the focal point. The final image must capture the aspirational lifestyle and luxury retail experience of modern India, with professional photography quality that looks like it could be from a high-end lifestyle magazine.",
         icon: ShoppingMallIcon,
       },
       {

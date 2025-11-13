@@ -30,43 +30,40 @@ const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 transition-opacity duration-300 animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-all duration-300 animate-fadeIn"
       onClick={onClose}
       aria-modal="true"
       role="dialog"
     >
       <div
-        className="transform transition-all duration-300 animate-scaleIn flex flex-col items-center gap-4"
+        className="transform transition-all duration-300 animate-scaleIn flex flex-col items-center gap-6"
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking on the content
       >
-        <div className="relative">
-          <img
-            src={imageUrl}
-            alt="Enlarged ad visualization"
-            className="max-w-[90vw] max-h-[80vh] object-contain rounded-lg shadow-2xl"
-          />
-          <button
-            onClick={onClose}
-            className="absolute -top-3 -right-3 md:-top-4 md:-right-4 z-10 p-2 bg-gray-800 rounded-full text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-amber-500"
-            aria-label="Close image viewer"
-          >
-            <CloseIcon className="h-6 w-6" />
-          </button>
+        <div className="relative group">
+          <div className="absolute -inset-1 bg-gradient-primary rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-300"></div>
+          <div className="relative">
+            <img
+              src={imageUrl}
+              alt="Enlarged ad visualization"
+              className="max-w-[90vw] max-h-[80vh] object-contain rounded-xl shadow-2xl"
+            />
+            <button
+              onClick={onClose}
+              className="absolute -top-4 -right-4 z-10 p-3 glass-card rounded-full text-white hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-900 focus:ring-indigo-500 transition-all duration-300 hover:scale-110"
+              aria-label="Close image viewer"
+            >
+              <CloseIcon className="h-5 w-5" />
+            </button>
+          </div>
         </div>
-        <p className="text-gray-400 text-sm font-semibold">powered by Skylar Team</p>
+        <div className="text-center">
+          <p className="text-gray-400 text-sm font-semibold mb-2">powered by Skylar Team</p>
+          <div className="flex items-center justify-center gap-2">
+            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-pulse"></div>
+            <span className="text-gray-500 text-xs">AI Generated</span>
+          </div>
+        </div>
       </div>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from { transform: scale(0.9); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-fadeIn { animation: fadeIn 0.2s ease-out forwards; }
-        .animate-scaleIn { animation: scaleIn 0.2s ease-out forwards; }
-      `}</style>
     </div>
   );
 };

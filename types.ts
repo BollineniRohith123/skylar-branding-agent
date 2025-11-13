@@ -22,7 +22,9 @@ export type ProductType =
   | 'skyline-panel'
   | 'road-median'
   | 'auto-canopy'
-  | 'car-wrap';
+  | 'car-wrap'
+  | 'unipole-media'
+  | 'facade-bridge';
 
 export interface Product {
   id: ProductType;

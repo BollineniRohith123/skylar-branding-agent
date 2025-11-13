@@ -391,19 +391,64 @@ export const HistoryIcon = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 export const ArrowLeftIcon = (props: React.SVGProps<SVGSVGElement>) => (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-        <path d="m12 19-7-7 7-7" />
-        <path d="M19 12H5" />
-    </svg>
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="m12 19-7-7 7-7" />
+    <path d="M19 12H5" />
+  </svg>
+);
+
+// New icon for Unipole Media
+export const UnipoleIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M12 2v20" />
+    <path d="M8 6h8" />
+    <path d="M6 10h12" />
+    <path d="M8 14h8" />
+    <path d="M6 18h12" />
+    <circle cx="12" cy="12" r="1" />
+  </svg>
+);
+
+// New icon for Facade/Bridge Media
+export const BridgeIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    {...props}
+  >
+    <path d="M3 12h18" />
+    <path d="M6 12v8" />
+    <path d="M18 12v8" />
+    <path d="M8 12l4-4 4 4" />
+    <path d="M8 20l4-4 4 4" />
+  </svg>
 );

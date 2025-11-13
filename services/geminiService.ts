@@ -78,6 +78,7 @@ export async function generateAdImage(
         },
         config: {
           responseModalities: [Modality.IMAGE],
+          temperature: 0.2, // Low temperature for consistent, professional brand image generation
         },
       });
       

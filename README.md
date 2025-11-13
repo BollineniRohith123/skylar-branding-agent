@@ -2,12 +2,12 @@
 
 # Skylar Brand Vision Generator
 
-An AI-powered application that transforms your logo into stunning brand visualizations across multiple advertising surfaces. Upload your logo and watch as our Gemini AI model generates professional brand mockups for various products and marketing materials.
+An AI-powered application that transforms your logo into stunning brand visualizations across multiple advertising surfaces. Upload your logo and watch as our Skylar Tech Team generates professional brand mockups for various products and marketing materials.
 
 ## ✨ Features
 
 - **Multi-Surface Brand Visualization**: See your logo applied across different advertising surfaces (billboards, packaging, digital ads, etc.)
-- **AI-Powered Generation**: Uses Google's Gemini AI to create high-quality, contextually appropriate brand visualizations
+- **AI-Powered Generation**: Uses Skylar Tech Team's advanced AI to create high-quality, contextually appropriate brand visualizations
 - **Multiple API Key Support**: Automatic rotation through multiple API keys to maximize quota and handle rate limits gracefully
 - **User-Friendly Error Handling**: Intelligent retry mechanism with user-friendly error messages
 - **Generation History**: Save and revisit your previous brand visualization sessions

@@ -52,7 +52,7 @@ const Sidebar: React.FC<SidebarProps> = ({ productCategories }) => {
           <p className="text-xs text-gray-500 mb-2">Powered by AI</p>
           <div className="flex items-center justify-center gap-2">
             <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-            <span className="text-xs text-gray-400">Gemini AI Active</span>
+            <span className="text-xs text-gray-400">Skylar Tech Team Active</span>
           </div>
         </div>
       </div>

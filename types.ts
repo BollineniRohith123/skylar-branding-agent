@@ -24,7 +24,10 @@ export type ProductType =
   | 'auto-canopy'
   | 'car-wrap'
   | 'unipole-media'
-  | 'facade-bridge';
+  | 'facade-bridge'
+  | 'aircraft-magazine'
+  | 'metro-pillar'
+  | 'truck-advertising';
 
 export interface Product {
   id: ProductType;

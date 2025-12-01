@@ -3,35 +3,35 @@ import type { GenerationResult, ProductType, ProductCategory, GenerationHistoryI
 import { UploadIcon, DownloadIcon, RefreshCwIcon, HistoryIcon, ArrowLeftIcon } from './icons';
 
 interface ImageDisplayProps {
-  view: 'generator' | 'history';
-  productCategories: ProductCategory[];
-  results: Record<ProductType, GenerationResult>;
-  isGenerating: boolean;
-  onUploadClick: () => void;
-  userLogo: File | null;
-  onImageClick: (imageUrl: string) => void;
-  onRegenerate: (productId: ProductType) => void;
-  isViewingHistory: boolean;
-  onShowHistory: () => void;
-  onBackToCurrent: () => void;
-  history: GenerationHistoryItem[];
-  onLoadHistory: (item: GenerationHistoryItem) => void;
-  // FIX: Added 'onBackToGenerator' to the props interface to allow navigating from history view back to the generator.
-  onBackToGenerator: () => void;
+    view: 'generator' | 'history';
+    productCategories: ProductCategory[];
+    results: Record<ProductType, GenerationResult>;
+    isGenerating: boolean;
+    onUploadClick: () => void;
+    userLogo: File | null;
+    onImageClick: (imageUrl: string) => void;
+    onRegenerate: (productId: ProductType) => void;
+    isViewingHistory: boolean;
+    onShowHistory: () => void;
+    onBackToCurrent: () => void;
+    history: GenerationHistoryItem[];
+    onLoadHistory: (item: GenerationHistoryItem) => void;
+    // FIX: Added 'onBackToGenerator' to the props interface to allow navigating from history view back to the generator.
+    onBackToGenerator: () => void;
 }
 
 const CardLoader: React.FC = () => (
     <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex flex-col items-center justify-center z-10 animate-fadeIn">
-      <div className="relative">
-        <div className="w-12 h-12 border-4 border-solid border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin"></div>
-        <div className="absolute inset-0 w-12 h-12 border-4 border-solid border-amber-400/20 border-t-amber-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
-      </div>
-      <p className="text-white text-sm mt-4 font-semibold animate-pulse">Generating...</p>
-      <div className="mt-2 flex space-x-1">
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
-      </div>
+        <div className="relative">
+            <div className="w-12 h-12 border-4 border-solid border-indigo-400/30 border-t-indigo-400 rounded-full animate-spin"></div>
+            <div className="absolute inset-0 w-12 h-12 border-4 border-solid border-amber-400/20 border-t-amber-400 rounded-full animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+        </div>
+        <p className="text-white text-sm mt-4 font-semibold animate-pulse">Generating...</p>
+        <div className="mt-2 flex space-x-1">
+            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+            <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+        </div>
     </div>
 );
 
@@ -43,9 +43,9 @@ const CardError: React.FC<{ error: string | null; onRetry?: () => void }> = () =
 };
 
 
-const ImageCard: React.FC<{ 
-    product: ProductCategory['products'][0]; 
-    result: GenerationResult; 
+const ImageCard: React.FC<{
+    product: ProductCategory['products'][0];
+    result: GenerationResult;
     onImageClick: (imageUrl: string) => void;
     onRegenerate: (productId: ProductType) => void;
     isRegenerationAllowed: boolean;
@@ -53,7 +53,7 @@ const ImageCard: React.FC<{
     const { status, imageUrl } = result;
 
     const handleDownload = (e: React.MouseEvent) => {
-        e.stopPropagation(); 
+        e.stopPropagation();
         if (!imageUrl) return;
         const link = document.createElement('a');
         link.href = imageUrl;
@@ -151,7 +151,7 @@ const HistoryView: React.FC<Pick<ImageDisplayProps, 'history' | 'onLoadHistory' 
 
     return (
         <main className="flex-1 flex flex-col p-8 bg-transparent overflow-auto animate-fadeIn">
-             <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
+            <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
                 <div>
                     <h2 className="text-4xl font-bold gradient-text mb-2">Generation History</h2>
                     <p className="text-gray-400 text-lg">Select a past session to view its results.</p>
@@ -159,8 +159,8 @@ const HistoryView: React.FC<Pick<ImageDisplayProps, 'history' | 'onLoadHistory' 
                 <button
                     onClick={onBackToGenerator}
                     className="btn btn-outline flex items-center gap-2"
-                    >
-                    <ArrowLeftIcon className="h-4 w-4"/>
+                >
+                    <ArrowLeftIcon className="h-4 w-4" />
                     <span>Back to Generator</span>
                 </button>
             </div>
@@ -169,7 +169,7 @@ const HistoryView: React.FC<Pick<ImageDisplayProps, 'history' | 'onLoadHistory' 
                     <div className="text-center glass-card p-12 rounded-2xl animate-fadeIn">
                         <div className="relative mb-8">
                             <div className="w-24 h-24 mx-auto bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl flex items-center justify-center">
-                                <HistoryIcon className="h-12 w-12 text-gray-400"/>
+                                <HistoryIcon className="h-12 w-12 text-gray-400" />
                             </div>
                             <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-secondary rounded-full flex items-center justify-center animate-pulse">
                                 <div className="w-3 h-3 bg-white rounded-full"></div>
@@ -215,112 +215,267 @@ const HistoryView: React.FC<Pick<ImageDisplayProps, 'history' | 'onLoadHistory' 
 };
 
 const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
-    const { 
-        view, productCategories, results, isGenerating, onUploadClick, userLogo, 
-        onImageClick, onRegenerate, isViewingHistory, onShowHistory, onBackToCurrent 
+    const {
+        view, productCategories, results, isGenerating, onUploadClick, userLogo,
+        onImageClick, onRegenerate, isViewingHistory, onShowHistory, onBackToCurrent
     } = props;
 
     if (view === 'history') {
         return <HistoryView {...props} />;
     }
 
-  return (
-    <main className="flex-1 flex flex-col p-8 bg-transparent overflow-auto animate-fadeIn">
-      <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
-        <div>
-          <h2 className="text-4xl font-bold gradient-text mb-2">Brand Visualization</h2>
-          <p className="text-gray-400 text-lg">Upload your logo to see it across all advertising surfaces.</p>
-        </div>
-        <div className="flex items-center gap-4">
-            {userLogo && (
-                <div className="text-right glass-card px-4 py-3 rounded-xl">
-                    <p className="text-sm font-semibold text-white">{isViewingHistory ? 'Viewing History For:' : 'Current Logo:'}</p>
-                    <p className="text-xs text-gray-400 truncate max-w-[200px]">{userLogo.name}</p>
+    return (
+        <main className="flex-1 flex flex-col p-8 bg-transparent overflow-auto animate-fadeIn">
+            <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
+                <div>
+                    <h2 className="text-4xl font-bold gradient-text mb-2">Brand Visualization</h2>
+                    <p className="text-gray-400 text-lg">Upload your logo to see it across all advertising surfaces.</p>
                 </div>
-            )}
-             {isViewingHistory && (
-                <button
-                    onClick={onBackToCurrent}
-                    className="btn btn-outline flex items-center gap-2"
-                    aria-label="Return to the current generation session"
+                <div className="flex items-center gap-4">
+                    {userLogo && (
+                        <div className="text-right glass-card px-4 py-3 rounded-xl">
+                            <p className="text-sm font-semibold text-white">{isViewingHistory ? 'Viewing History For:' : 'Current Logo:'}</p>
+                            <p className="text-xs text-gray-400 truncate max-w-[200px]">{userLogo.name}</p>
+                        </div>
+                    )}
+                    {isViewingHistory && (
+                        <button
+                            onClick={onBackToCurrent}
+                            className="btn btn-outline flex items-center gap-2"
+                            aria-label="Return to the current generation session"
+                        >
+                            <ArrowLeftIcon className="h-4 w-4" />
+                            <span>Back to Current</span>
+                        </button>
+                    )}
+                    <button
+                        onClick={onShowHistory}
+                        disabled={isGenerating}
+                        className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                    <ArrowLeftIcon className="h-4 w-4" />
-                    <span>Back to Current</span>
-                </button>
-            )}
-             <button
-              onClick={onShowHistory}
-              disabled={isGenerating}
-              className="btn btn-secondary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <HistoryIcon className="h-4 w-4"/>
-              <span>History</span>
-            </button>
-            <button
-              onClick={onUploadClick}
-              disabled={isGenerating}
-              className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <UploadIcon className="h-4 w-4"/>
-              <span>{userLogo && !isViewingHistory ? 'Change Logo' : 'Upload Logo'}</span>
-            </button>
-        </div>
-      </div>
-
-      {!userLogo ? (
-        <div className="flex-1 flex items-center justify-center">
-            <div className="text-center glass-card p-12 rounded-2xl animate-fadeIn">
-                <div className="relative mb-8">
-                    <div className="w-24 h-24 mx-auto bg-gradient-primary rounded-2xl flex items-center justify-center animate-float">
-                        <UploadIcon className="h-12 w-12 text-white"/>
-                    </div>
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-secondary rounded-full flex items-center justify-center animate-pulse">
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
-                    </div>
+                        <HistoryIcon className="h-4 w-4" />
+                        <span>History</span>
+                    </button>
+                    <button
+                        onClick={onUploadClick}
+                        disabled={isGenerating}
+                        className="btn btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <UploadIcon className="h-4 w-4" />
+                        <span>{userLogo && !isViewingHistory ? 'Change Logo' : 'Upload Logo'}</span>
+                    </button>
                 </div>
-                <h3 className="text-3xl font-bold gradient-text mb-4">Your Logo Here</h3>
-                <p className="text-gray-300 text-lg mb-8 max-w-md">Click "Upload Logo" to see your brand in action across multiple advertising surfaces.</p>
-                <button
-                    onClick={onUploadClick}
-                    className="btn btn-primary text-lg px-8 py-4"
-                >
-                    <UploadIcon className="h-5 w-5"/>
-                    Upload Your Logo
-                </button>
             </div>
-        </div>
-      ) : (
-        <div className="space-y-16">
-            {productCategories.map((category, categoryIndex) => (
-                <div key={category.name} className="animate-fadeIn" style={{ animationDelay: `${categoryIndex * 0.1}s` }}>
-                    <div className="flex items-center gap-4 mb-8">
-                        <div className="h-1 w-12 bg-gradient-primary rounded-full"></div>
-                        <h3 className="text-3xl font-bold gradient-text">{category.name}</h3>
-                        <div className="h-1 flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent rounded-full"></div>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-                        {category.products.map((product, productIndex) => (
-                            <div
-                                key={product.id}
-                                className="animate-fadeIn"
-                                style={{ animationDelay: `${(categoryIndex * 0.1) + (productIndex * 0.05)}s` }}
-                            >
-                                <ImageCard
-                                    product={product}
-                                    result={results[product.id]}
-                                    onImageClick={onImageClick}
-                                    onRegenerate={onRegenerate}
-                                    isRegenerationAllowed={!isViewingHistory}
-                                />
+
+            {!userLogo ? (
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center glass-card p-12 rounded-2xl animate-fadeIn max-w-4xl">
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+                            {/* Left Column - Upload Section */}
+                            <div className="text-left">
+                                <div className="relative mb-8">
+                                    <div className="w-20 h-20 bg-gradient-primary rounded-2xl flex items-center justify-center animate-float">
+                                        <UploadIcon className="h-10 w-10 text-white" />
+                                    </div>
+                                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-gradient-secondary rounded-full flex items-center justify-center animate-pulse">
+                                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                                    </div>
+                                </div>
+                                <h3 className="text-3xl font-bold gradient-text mb-4">Transform Your Brand</h3>
+                                <p className="text-gray-300 text-lg mb-8">Upload your logo to see it come to life across premium advertising surfaces with Skylar's brand visualization technology.</p>
+                                <button
+                                    onClick={onUploadClick}
+                                    className="btn btn-primary text-lg px-8 py-4"
+                                >
+                                    <UploadIcon className="h-5 w-5" />
+                                    Upload Your Logo
+                                </button>
                             </div>
-                        ))}
+                            
+                            {/* Right Column - Brand Images Showcase */}
+                            <div className="relative">
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-metro-exterior.png" 
+                                            alt="Skylar Metro Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Metro Exterior</p>
+                                                <p className="text-xs opacity-90">High-impact transit advertising</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-aircraft-exterior (3).png" 
+                                            alt="Skylar Aircraft Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Aircraft Exterior</p>
+                                                <p className="text-xs opacity-90">Premium aviation branding</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-shopping-mall (1).png" 
+                                            alt="Skylar Shopping Mall Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Shopping Mall</p>
+                                                <p className="text-xs opacity-90">Retail destination advertising</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-unipole-billboard (2).png" 
+                                            alt="Skylar Billboard Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Unipole Billboard</p>
+                                                <p className="text-xs opacity-90">Large-format outdoor advertising</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-facade-bridge (1).png" 
+                                            alt="Skylar Facade Bridge Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Facade Bridge</p>
+                                                <p className="text-xs opacity-90">Architectural integration</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="relative group">
+                                        <img 
+                                            src="/Skylar Brand Images/skylar-car-wrap (4).png" 
+                                            alt="Skylar Car Wrap Branding"
+                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+                                            <div className="text-white">
+                                                <p className="font-semibold text-sm">Car Wrap</p>
+                                                <p className="text-xs opacity-90">Mobile brand exposure</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="mt-6 text-center">
+                                    <p className="text-sm font-semibold text-gray-300">Premium Branding Surfaces</p>
+                                    <p className="text-xs text-gray-500 mt-1">Showcasing your brand across multiple high-impact locations</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Features Section */}
+                        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl border border-white/5">
+                                <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mb-4">
+                                    <UploadIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <h4 className="text-white font-semibold mb-2">Easy Upload</h4>
+                                <p className="text-gray-400 text-sm">Simply upload your logo in PNG, JPEG, or WebP format</p>
+                            </div>
+                            <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl border border-white/5">
+                                <div className="w-12 h-12 bg-gradient-secondary rounded-lg flex items-center justify-center mb-4">
+                                    <RefreshCwIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <h4 className="text-white font-semibold mb-2">AI Generation</h4>
+                                <p className="text-gray-400 text-sm">Advanced AI creates stunning brand visualizations instantly</p>
+                            </div>
+                            <div className="p-6 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-xl border border-white/5">
+                                <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mb-4">
+                                    <DownloadIcon className="h-6 w-6 text-white" />
+                                </div>
+                                <h4 className="text-white font-semibold mb-2">Download Ready</h4>
+                                <p className="text-gray-400 text-sm">Download high-quality images for your marketing campaigns</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            ))}
-        </div>
-      )}
-    </main>
-  );
+            ) : (
+                <>
+                    {/* Uploaded Logo Display Section */}
+                    <div className="mb-12 glass-card p-10 rounded-2xl animate-fadeIn">
+                        <div className="flex items-center justify-between mb-8">
+                            <div>
+                                <h3 className="text-3xl font-bold gradient-text mb-2">Your Brand Logo</h3>
+                                <p className="text-gray-400 text-lg">This is your logo that will be applied to all advertising surfaces with stunning visual impact</p>
+                            </div>
+                            <button
+                                onClick={onUploadClick}
+                                disabled={isGenerating}
+                                className="btn btn-outline flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <UploadIcon className="h-4 w-4" />
+                                Change Logo
+                            </button>
+                        </div>
+                        <div className="flex items-center justify-center p-12 bg-gradient-to-br from-gray-800/30 to-gray-900/30 rounded-2xl border border-white/5">
+                            <div className="relative group">
+                                <div className="w-64 h-64 bg-white rounded-2xl shadow-2xl flex items-center justify-center p-6 transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-3xl">
+                                    <img
+                                        src={userLogo ? URL.createObjectURL(userLogo) : ''}
+                                        alt="Uploaded Logo"
+                                        className="max-w-full max-h-full object-contain filter drop-shadow-lg"
+                                    />
+                                </div>
+                                <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 px-6 py-3 bg-gradient-primary rounded-full text-white text-sm font-semibold shadow-xl border border-white/20">
+                                    {userLogo?.name}
+                                </div>
+                                <div className="absolute -top-4 -right-4 w-12 h-12 bg-gradient-secondary rounded-full flex items-center justify-center animate-pulse shadow-lg">
+                                    <div className="w-4 h-4 bg-white rounded-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-16">
+                    {productCategories.map((category, categoryIndex) => (
+                        <div key={category.name} className="animate-fadeIn" style={{ animationDelay: `${categoryIndex * 0.1}s` }}>
+                            <div className="flex items-center gap-4 mb-8">
+                                <div className="h-1 w-12 bg-gradient-primary rounded-full"></div>
+                                <h3 className="text-3xl font-bold gradient-text">{category.name}</h3>
+                                <div className="h-1 flex-1 bg-gradient-to-r from-indigo-500/20 to-transparent rounded-full"></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                                {category.products.map((product, productIndex) => (
+                                    <div
+                                        key={product.id}
+                                        className="animate-fadeIn"
+                                        style={{ animationDelay: `${(categoryIndex * 0.1) + (productIndex * 0.05)}s` }}
+                                    >
+                                        <ImageCard
+                                            product={product}
+                                            result={results[product.id]}
+                                            onImageClick={onImageClick}
+                                            onRegenerate={onRegenerate}
+                                            isRegenerationAllowed={!isViewingHistory}
+                                        />
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                    </div>
+                </>
+            )}
+        </main>
+    );
 };
 
 export default ImageDisplay;

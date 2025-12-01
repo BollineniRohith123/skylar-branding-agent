@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { GenerationResult, ProductType, ProductCategory, GenerationHistoryItem } from '../types';
 import { UploadIcon, DownloadIcon, RefreshCwIcon, HistoryIcon, ArrowLeftIcon } from './icons';
 
@@ -220,11 +220,60 @@ const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
         onImageClick, onRegenerate, isViewingHistory, onShowHistory, onBackToCurrent
     } = props;
 
+    // Carousel state
+    const [currentSlide, setCurrentSlide] = useState(0);
+    const [enlargedImage, setEnlargedImage] = useState<{ src: string; title: string } | null>(null);
+    
+    // All Skylar brand images for the carousel
+    const brandImages = [
+        { src: '/Skylar Brand Images/skylar-metro-exterior.png', title: 'Metro Exterior', description: 'High-impact transit advertising' },
+        { src: '/Skylar Brand Images/skylar-aircraft-exterior (3).png', title: 'Aircraft Exterior', description: 'Premium aviation branding' },
+        { src: '/Skylar Brand Images/skylar-shopping-mall (1).png', title: 'Shopping Mall', description: 'Retail destination advertising' },
+        { src: '/Skylar Brand Images/skylar-unipole-billboard (2).png', title: 'Unipole Billboard', description: 'Large-format outdoor advertising' },
+        { src: '/Skylar Brand Images/skylar-facade-bridge (1).png', title: 'Facade Bridge', description: 'Architectural integration' },
+        { src: '/Skylar Brand Images/skylar-car-wrap (4).png', title: 'Car Wrap', description: 'Mobile brand exposure' },
+        { src: '/Skylar Brand Images/skylar-metro-pillar (2).png', title: 'Metro Pillar', description: 'Transit hub branding' },
+        { src: '/Skylar Brand Images/skylar-road-median.png', title: 'Road Median', description: 'High-visibility road advertising' },
+        { src: '/Skylar Brand Images/skylar-baggage-cart (2).png', title: 'Baggage Cart', description: 'Airport terminal branding' },
+        { src: '/Skylar Brand Images/skylar-boarding-pass (1).png', title: 'Boarding Pass', description: 'Personalized brand experience' },
+        { src: '/Skylar Brand Images/skylar-meal-tray (2).png', title: 'Meal Tray', description: 'In-flight branding' },
+        { src: '/Skylar Brand Images/skylar-aircraft-magazine (1).png', title: 'Aircraft Magazine', description: 'In-flight publication branding' },
+        { src: '/Skylar Brand Images/skylar-auto-canopy (1).png', title: 'Auto Canopy', description: 'Gas station branding' },
+        { src: '/Skylar Brand Images/skylar-step-ladder (1).png', title: 'Step Ladder', description: 'Event branding solution' }
+    ];
+
+    const nextSlide = () => {
+        setCurrentSlide((prev) => (prev + 1) % brandImages.length);
+    };
+
+    const prevSlide = () => {
+        setCurrentSlide((prev) => (prev - 1 + brandImages.length) % brandImages.length);
+    };
+
+    const goToSlide = (index: number) => {
+        setCurrentSlide(index);
+    };
+
+    const handleImageClick = (src: string, title: string) => {
+        setEnlargedImage({ src, title });
+    };
+
+    const closeEnlargedImage = () => {
+        setEnlargedImage(null);
+    };
+
+    // Auto-slide every 1.5 seconds
+    useEffect(() => {
+        const interval = setInterval(nextSlide, 1500);
+        return () => clearInterval(interval);
+    }, []);
+
     if (view === 'history') {
         return <HistoryView {...props} />;
     }
 
     return (
+        <div>
         <main className="flex-1 flex flex-col p-8 bg-transparent overflow-auto animate-fadeIn">
             <div className="flex justify-between items-center mb-8 pb-6 border-b border-white/10">
                 <div>
@@ -292,91 +341,81 @@ const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
                                 </button>
                             </div>
                             
-                            {/* Right Column - Brand Images Showcase */}
+                            {/* Right Column - Brand Images Carousel */}
                             <div className="relative">
-                                <div className="grid grid-cols-2 gap-6">
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-metro-exterior.png" 
-                                            alt="Skylar Metro Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Metro Exterior</p>
-                                                <p className="text-xs opacity-90">High-impact transit advertising</p>
-                                            </div>
+                                <div className="relative overflow-hidden rounded-2xl shadow-2xl bg-gradient-to-br from-gray-800/50 to-gray-900/50 border border-white/10">
+                                    {/* Main Carousel Display */}
+                                    <div className="relative h-80 flex items-center justify-center">
+                                        <div className="flex transition-transform duration-700 ease-in-out h-full"
+                                             style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+                                            {brandImages.map((image, index) => (
+                                                <div key={index} className="w-full h-full flex-shrink-0 flex items-center justify-center p-4">
+                                                    <img
+                                                        src={image.src}
+                                                        alt={image.title}
+                                                        className="max-w-full max-h-full object-contain rounded-xl shadow-xl cursor-pointer transform transition-all duration-300 hover:scale-105"
+                                                        onClick={() => handleImageClick(image.src, image.title)}
+                                                    />
+                                                </div>
+                                            ))}
                                         </div>
+                                        
+                                        {/* Navigation Arrows */}
+                                        <button
+                                            onClick={prevSlide}
+                                            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-all duration-300 opacity-80 hover:opacity-100"
+                                            aria-label="Previous image"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                            </svg>
+                                        </button>
+                                        <button
+                                            onClick={nextSlide}
+                                            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center text-white shadow-lg hover:scale-110 transition-all duration-300 opacity-80 hover:opacity-100"
+                                            aria-label="Next image"
+                                        >
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-aircraft-exterior (3).png" 
-                                            alt="Skylar Aircraft Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Aircraft Exterior</p>
-                                                <p className="text-xs opacity-90">Premium aviation branding</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-shopping-mall (1).png" 
-                                            alt="Skylar Shopping Mall Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Shopping Mall</p>
-                                                <p className="text-xs opacity-90">Retail destination advertising</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-unipole-billboard (2).png" 
-                                            alt="Skylar Billboard Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Unipole Billboard</p>
-                                                <p className="text-xs opacity-90">Large-format outdoor advertising</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-facade-bridge (1).png" 
-                                            alt="Skylar Facade Bridge Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Facade Bridge</p>
-                                                <p className="text-xs opacity-90">Architectural integration</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="relative group">
-                                        <img 
-                                            src="/Skylar Brand Images/skylar-car-wrap (4).png" 
-                                            alt="Skylar Car Wrap Branding"
-                                            className="w-full h-40 object-cover rounded-xl shadow-xl transform transition-all duration-500 group-hover:scale-105 group-hover:shadow-2xl"
-                                        />
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
-                                            <div className="text-white">
-                                                <p className="font-semibold text-sm">Car Wrap</p>
-                                                <p className="text-xs opacity-90">Mobile brand exposure</p>
-                                            </div>
-                                        </div>
+                                    
+                                    {/* Image Information Overlay */}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6">
+                                        <h4 className="text-white font-bold text-xl mb-1">{brandImages[currentSlide].title}</h4>
+                                        <p className="text-gray-300 text-sm">{brandImages[currentSlide].description}</p>
                                     </div>
                                 </div>
+                                
+                                {/* Thumbnail Navigation */}
+                                <div className="mt-6 flex flex-wrap gap-2 justify-center max-w-full">
+                                    {brandImages.map((image, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => goToSlide(index)}
+                                            className={`relative w-16 h-16 rounded-lg overflow-hidden transition-all duration-300 ${
+                                                currentSlide === index 
+                                                    ? 'ring-2 ring-indigo-400 scale-110 shadow-lg' 
+                                                    : 'opacity-60 hover:opacity-100 scale-100'
+                                            }`}
+                                            aria-label={`Go to ${image.title}`}
+                                        >
+                                            <img
+                                                src={image.src}
+                                                alt={image.title}
+                                                className="w-full h-full object-cover"
+                                            />
+                                            {currentSlide === index && (
+                                                <div className="absolute inset-0 bg-indigo-400/20 pointer-events-none"></div>
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                                
                                 <div className="mt-6 text-center">
                                     <p className="text-sm font-semibold text-gray-300">Premium Branding Surfaces</p>
-                                    <p className="text-xs text-gray-500 mt-1">Showcasing your brand across multiple high-impact locations</p>
+                                    <p className="text-xs text-gray-500 mt-1">Explore all {brandImages.length} high-impact advertising locations</p>
                                 </div>
                             </div>
                         </div>
@@ -475,6 +514,39 @@ const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
                 </>
             )}
         </main>
+        
+        {/* Enlarged Image Modal */}
+        {enlargedImage && (
+            <div 
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-fadeIn"
+                onClick={closeEnlargedImage}
+            >
+                <div className="relative max-w-6xl max-h-screen p-4">
+                    <button
+                        onClick={closeEnlargedImage}
+                        className="absolute top-4 right-4 w-12 h-12 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 z-10"
+                        aria-label="Close enlarged image"
+                    >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+                        <div className="p-4 bg-gradient-to-r from-gray-800 to-gray-900 text-white">
+                            <h3 className="text-xl font-bold">{enlargedImage.title}</h3>
+                        </div>
+                        <div className="p-8 bg-gray-100">
+                            <img
+                                src={enlargedImage.src}
+                                alt={enlargedImage.title}
+                                className="max-w-full max-h-[70vh] object-contain mx-auto"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        )}
+    </div>
     );
 };
 

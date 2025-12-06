@@ -1,4 +1,5 @@
 import path from 'path';
+import fs from 'fs';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import mysql from 'mysql2/promise';
@@ -170,8 +171,42 @@ const startupLogPlugin = {
 
     server.middlewares.use(async (req, res, next) => {
       try {
-        // Handle /admin route - serve admin.html without redirect
-        if (req.url === '/admin' || req.url === '/admin/') {
+        // Serve static files from userbanners folder
+        if (req.url?.startsWith('/userbanners/')) {
+          const filePath = path.join(process.cwd(), 'userbanners', req.url.replace('/userbanners/', ''));
+          
+          // Security check - prevent path traversal
+          const realPath = path.resolve(filePath);
+          const bannersDir = path.resolve(path.join(process.cwd(), 'userbanners'));
+          
+          if (!realPath.startsWith(bannersDir)) {
+            res.statusCode = 403;
+            res.end('Forbidden');
+            return;
+          }
+
+          if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
+            const ext = path.extname(filePath).toLowerCase();
+            const mimeTypes: Record<string, string> = {
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+              '.png': 'image/png',
+              '.gif': 'image/gif',
+              '.webp': 'image/webp',
+            };
+            
+            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            res.setHeader('Content-Type', contentType);
+            res.setHeader('Cache-Control', 'public, max-age=3600');
+            
+            const fileStream = fs.createReadStream(filePath);
+            fileStream.pipe(res);
+            return;
+          }
+        }
+
+        // Handle /admin routes - serve admin.html without redirect
+        if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin/user/')) {
           req.url = '/admin.html';
         }
 
@@ -576,6 +611,131 @@ const startupLogPlugin = {
             return;
           } finally {
             conn.release();
+          }
+        }
+
+        // Admin API: Get user images
+        if (req.url?.startsWith('/api/admin/user-images/') && req.method === 'GET') {
+          try {
+            const userId = req.url.split('/').pop();
+            const userIdNum = parseInt(userId || '0', 10);
+            
+            if (!userIdNum) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'Invalid user ID' }));
+              return;
+            }
+
+            // Get user from database
+            const conn = await pool.getConnection();
+            try {
+              const [userRows]: any = await conn.query('SELECT id, email FROM email_verification WHERE id = ?', [userIdNum]);
+              
+              if (!userRows || userRows.length === 0) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: 'User not found', images: [] }));
+                return;
+              }
+
+              const userFolder = path.join(process.cwd(), 'userbanners', String(userIdNum));
+              const images: { name: string; url: string; size: string }[] = [];
+
+              // Check if folder exists and read images
+              if (fs.existsSync(userFolder)) {
+                const files = fs.readdirSync(userFolder);
+                for (const file of files) {
+                  if (['.png', '.jpg', '.jpeg', '.webp', '.gif'].some(ext => file.toLowerCase().endsWith(ext))) {
+                    const filePath = path.join(userFolder, file);
+                    const stats = fs.statSync(filePath);
+                    const sizeInKB = (stats.size / 1024).toFixed(2);
+                    
+                    images.push({
+                      name: file,
+                      url: `/userbanners/${userIdNum}/${file}`,
+                      size: `${sizeInKB} KB`,
+                    });
+                  }
+                }
+              }
+
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ images, userId: userIdNum, email: userRows[0].email }));
+              return;
+            } finally {
+              conn.release();
+            }
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err), images: [] }));
+            return;
+          }
+        }
+
+        // Admin API: Delete user and their images
+        if (req.url?.startsWith('/api/admin/delete-user/') && req.method === 'DELETE') {
+          try {
+            const userId = req.url.split('/').pop();
+            const userIdNum = parseInt(userId || '0', 10);
+            
+            if (!userIdNum) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: 'Invalid user ID' }));
+              return;
+            }
+
+            const conn = await pool.getConnection();
+            try {
+              // Check if user exists
+              const [userRows]: any = await conn.query('SELECT id, email FROM email_verification WHERE id = ?', [userIdNum]);
+              
+              if (!userRows || userRows.length === 0) {
+                res.statusCode = 404;
+                res.end(JSON.stringify({ error: 'User not found' }));
+                return;
+              }
+
+              // Delete user images folder
+              const userFolder = path.join(process.cwd(), 'userbanners', String(userIdNum));
+              let deletedFiles = 0;
+              
+              if (fs.existsSync(userFolder)) {
+                const files = fs.readdirSync(userFolder);
+                for (const file of files) {
+                  const filePath = path.join(userFolder, file);
+                  try {
+                    fs.unlinkSync(filePath);
+                    deletedFiles++;
+                  } catch (err) {
+                    console.error(`Failed to delete file ${filePath}:`, err);
+                  }
+                }
+                
+                // Remove the directory
+                try {
+                  fs.rmdirSync(userFolder);
+                } catch (err) {
+                  console.error(`Failed to remove directory ${userFolder}:`, err);
+                }
+              }
+
+              // Delete user from database
+              await conn.query('DELETE FROM email_verification WHERE id = ?', [userIdNum]);
+
+              res.setHeader('Content-Type', 'application/json');
+              res.end(JSON.stringify({ 
+                success: true, 
+                userId: userIdNum, 
+                email: userRows[0].email,
+                deletedFiles 
+              }));
+              return;
+            } finally {
+              conn.release();
+            }
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
+            return;
           }
         }
       } catch (err) {

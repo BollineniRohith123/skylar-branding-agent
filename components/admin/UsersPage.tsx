@@ -39,6 +39,31 @@ const UsersPage: React.FC = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: number, userEmail: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userEmail}"? This will delete all their images and data permanently.`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/delete-user/${userId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to delete user');
+      }
+
+      const result = await response.json();
+      alert(`✅ Successfully deleted user and ${result.deletedFiles || 0} image(s)`);
+      
+      // Refresh the users list
+      fetchUsers();
+    } catch (err) {
+      alert(`❌ Error: ${err instanceof Error ? err.message : 'Failed to delete user'}`);
+    }
+  };
+
   const filteredUsers = users.filter(user =>
     user.email.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -169,8 +194,18 @@ const UsersPage: React.FC = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-300">{formatDate(user.created_at)}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
-                        <button className="text-indigo-400 hover:text-indigo-300 mr-3">View</button>
-                        <button className="text-red-400 hover:text-red-300">Delete</button>
+                        <a
+                          href={`/admin/user/${user.id}/${encodeURIComponent(user.email)}`}
+                          className="text-indigo-400 hover:text-indigo-300 mr-3"
+                        >
+                          View
+                        </a>
+                        <button 
+                          onClick={() => handleDeleteUser(user.id, user.email)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}

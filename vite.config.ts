@@ -170,6 +170,11 @@ const startupLogPlugin = {
 
     server.middlewares.use(async (req, res, next) => {
       try {
+        // Handle /admin route - serve admin.html without redirect
+        if (req.url === '/admin' || req.url === '/admin/') {
+          req.url = '/admin.html';
+        }
+
         // Ensure email_verification table has required columns (add missing columns if necessary)
         async function ensureSchema(conn) {
           try {
@@ -556,6 +561,23 @@ const startupLogPlugin = {
             conn2.release();
           }
         }
+
+        // Admin API: Get all users
+        if (req.url === '/api/admin/users' && req.method === 'GET') {
+          const conn = await pool.getConnection();
+          try {
+            await ensureSchema(conn);
+            const [rows] = await conn.query(
+              'SELECT id, email, is_verified, status, regeneration_count, max_regenerations, attempt_count, max_attempts, created_at, updated_at FROM email_verification ORDER BY created_at DESC'
+            );
+            
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ users: rows }));
+            return;
+          } finally {
+            conn.release();
+          }
+        }
       } catch (err) {
         res.statusCode = 500;
         res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err) }));
@@ -582,6 +604,14 @@ export default defineConfig(({ mode }) => {
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),
+        }
+      },
+      build: {
+        rollupOptions: {
+          input: {
+            main: path.resolve(__dirname, 'index.html'),
+            admin: path.resolve(__dirname, 'admin.html'),
+          }
         }
       }
     };

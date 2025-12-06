@@ -1,5 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import DashboardPage from './components/admin/DashboardPage';
 import UsersPage from './components/admin/UsersPage';
 import UserImagesPage from './components/admin/UserImagesPage';
 import './index.css';
@@ -30,9 +31,12 @@ if (path.startsWith('/admin/user/')) {
   const userEmail = decodeURIComponent(parts[4] || '');
   
   currentPage = <UserImagesPage userId={userId} userEmail={userEmail} />;
-} else {
-  // Default to users page
+} else if (path === '/admin/users' || path === '/admin/users/') {
+  // Users page
   currentPage = <UsersPage />;
+} else {
+  // Default to dashboard
+  currentPage = <DashboardPage />;
 }
 
 const container = document.getElementById('root');

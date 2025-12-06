@@ -14,6 +14,16 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
     { id: 'users', label: 'Users', icon: UsersIcon, path: '/admin/users' },
   ];
 
+  // Determine current page from URL if not explicitly set
+  const getCurrentPage = () => {
+    const path = window.location.pathname;
+    if (path === '/admin' || path === '/admin/') return 'dashboard';
+    if (path.startsWith('/admin/users')) return 'users';
+    return currentPage;
+  };
+
+  const activePage = getCurrentPage();
+
   return (
     <div className="min-h-screen bg-gray-900 flex">
       {/* Sidebar */}
@@ -39,7 +49,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
         <nav className="flex-1 p-4 space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
-            const isActive = currentPage === item.id;
+            const isActive = activePage === item.id;
             return (
               <a
                 key={item.id}

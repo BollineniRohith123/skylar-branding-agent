@@ -212,7 +212,7 @@ const startupLogPlugin = {
         }
 
         // Handle /admin routes - serve admin.html without redirect
-        if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin/user/')) {
+        if (req.url === '/admin' || req.url === '/admin/' || req.url === '/admin/users' || req.url === '/admin/users/' || req.url?.startsWith('/admin/user/')) {
           req.url = '/admin.html';
         }
 
@@ -671,6 +671,36 @@ const startupLogPlugin = {
             return;
           } finally {
             conn2.release();
+          }
+        }
+
+        // Admin API: Get dashboard stats
+        if (req.url === '/api/admin/dashboard-stats' && req.method === 'GET') {
+          try {
+            // Count total images across all user folders
+            let totalImages = 0;
+            const userBannersDir = path.join(process.cwd(), 'userbanners');
+            
+            if (fs.existsSync(userBannersDir)) {
+              const userFolders = fs.readdirSync(userBannersDir);
+              for (const folder of userFolders) {
+                const folderPath = path.join(userBannersDir, folder);
+                if (fs.statSync(folderPath).isDirectory()) {
+                  const files = fs.readdirSync(folderPath);
+                  totalImages += files.filter(f => 
+                    ['.png', '.jpg', '.jpeg', '.webp', '.gif'].some(ext => f.toLowerCase().endsWith(ext))
+                  ).length;
+                }
+              }
+            }
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ totalImages }));
+            return;
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: err instanceof Error ? err.message : String(err), totalImages: 0 }));
+            return;
           }
         }
 

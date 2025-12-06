@@ -1,29 +1,20 @@
 import { GoogleGenAI, Modality } from "@google/genai";
 import type { Base64Image } from "../types";
 
-// Parse API keys from environment variable (comma-separated)
-const API_KEYS_STRING = process.env.API_KEYS;
-
-if (!API_KEYS_STRING) {
-  throw new Error("API_KEYS environment variable not set");
-}
-
-const API_KEYS = API_KEYS_STRING.split(',').map(key => key.trim()).filter(key => key.length > 0);
-
-if (API_KEYS.length === 0) {
-  throw new Error("No valid API keys found in API_KEYS environment variable");
-}
-
-console.log(`Initialized with ${API_KEYS.length} API key(s)`);
-
-// Track current key index for rotation
-let currentKeyIndex = 0;
-
-// Get next API key in rotation
-function getNextApiKey(): string {
-  const key = API_KEYS[currentKeyIndex];
-  currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
-  return key;
+// Helper to retrieve API keys at runtime (supports Vite and Node envs)
+function resolveApiKeys(): string[] {
+  let API_KEYS_STRING: string | null | undefined = null;
+  try {
+    const meta = (import.meta as any)?.env;
+    API_KEYS_STRING = meta?.VITE_API_KEYS || meta?.VITE_GEMINI_API_KEY;
+  } catch (e) {
+    // ignore
+  }
+  if (!API_KEYS_STRING && typeof process !== 'undefined') {
+    API_KEYS_STRING = process.env?.API_KEYS || process.env?.GEMINI_API_KEY;
+  }
+  if (!API_KEYS_STRING) return [];
+  return API_KEYS_STRING.split(',').map(s => s.trim()).filter(s => s.length > 0);
 }
 
 // Check if error is a rate limit/quota error
@@ -55,7 +46,20 @@ export async function generateAdImage(
 ): Promise<string> {
   const model = 'gemini-2.5-flash-image';
   let lastError: Error | null = null;
-  
+  // Resolve API keys at call time (supports Vite and Node envs)
+  const API_KEYS = resolveApiKeys();
+  if (API_KEYS.length === 0) {
+    throw new Error("API keys environment variable not set. Please add VITE_API_KEYS or VITE_GEMINI_API_KEY to your environment (e.g. .env.local)");
+  }
+
+  // Track current key index for rotation
+  let currentKeyIndex = 0;
+  function getNextApiKey(): string {
+    const key = API_KEYS[currentKeyIndex];
+    currentKeyIndex = (currentKeyIndex + 1) % API_KEYS.length;
+    return key;
+  }
+
   // Try with all available API keys before giving up
   for (let attempt = 0; attempt < API_KEYS.length; attempt++) {
     try {

@@ -1,4 +1,34 @@
 import React, { useState, useEffect } from 'react';
+import JSZip from 'jszip';
+// Utility to download all images as a zip
+async function downloadAllImagesZip(results: Record<string, any>, categories: any[]) {
+    const zip = new JSZip();
+    let count = 0;
+    for (const cat of categories) {
+        for (const product of cat.products) {
+            const res = results[product.id];
+            if (res && res.status === 'success' && res.imageUrl) {
+                const base64 = res.imageUrl.split(',')[1];
+                const ext = (res.imageUrl.split(';')[0].split('/')[1] || 'png').replace(/[^a-zA-Z0-9]/g, '');
+                zip.file(`${product.id}.${ext}`, base64, { base64: true });
+                count++;
+            }
+        }
+    }
+    if (count === 0) {
+        alert('No images to download.');
+        return;
+    }
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'skylar-images.zip';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
 import type { GenerationResult, ProductType, ProductCategory, GenerationHistoryItem } from '../types';
 import { UploadIcon, DownloadIcon, RefreshCwIcon, HistoryIcon, ArrowLeftIcon } from './icons';
 
@@ -11,6 +41,7 @@ interface ImageDisplayProps {
     userLogo: File | null;
     onImageClick: (imageUrl: string) => void;
     onRegenerate: (productId: ProductType) => void;
+    onRegenerateAll?: () => void;
     isViewingHistory: boolean;
     onShowHistory: () => void;
     onBackToCurrent: () => void;
@@ -217,7 +248,7 @@ const HistoryView: React.FC<Pick<ImageDisplayProps, 'history' | 'onLoadHistory' 
 const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
     const {
         view, productCategories, results, isGenerating, onUploadClick, userLogo,
-        onImageClick, onRegenerate, isViewingHistory, onShowHistory, onBackToCurrent
+        onImageClick, onRegenerate, onRegenerateAll, isViewingHistory, onShowHistory, onBackToCurrent
     } = props;
 
     // Carousel state
@@ -511,6 +542,32 @@ const ImageDisplay: React.FC<ImageDisplayProps> = (props) => {
                         </div>
                     ))}
                     </div>
+
+                    {/* Regenerate All & Download All Buttons */}
+                    {userLogo && !isViewingHistory && !isGenerating && (
+                        <div className="mt-16 flex flex-col items-center gap-4">
+                            <button
+                                onClick={() => {
+                                    if (typeof onRegenerateAll === 'function') {
+                                        onRegenerateAll();
+                                    } else {
+                                        console.error('onRegenerateAll is not a function:', typeof onRegenerateAll);
+                                    }
+                                }}
+                                className="btn btn-primary flex items-center gap-3 px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
+                            >
+                                <RefreshCwIcon className="h-5 w-5" />
+                                <span>Regenerate All Images</span>
+                            </button>
+                            <button
+                                onClick={() => downloadAllImagesZip(results, productCategories)}
+                                className="btn btn-secondary flex items-center gap-3 px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all"
+                            >
+                                <DownloadIcon className="h-5 w-5" />
+                                <span>Download All Images (ZIP)</span>
+                            </button>
+                        </div>
+                    )}
                 </>
             )}
         </main>

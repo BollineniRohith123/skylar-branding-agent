@@ -1,7 +1,12 @@
 
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import { initializeApp } from './services/initializationService';
+
+// Initialize app and log startup information
+initializeApp();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

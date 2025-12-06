@@ -2,11 +2,13 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import Sidebar from './components/Sidebar';
 import ImageDisplay from './components/ImageDisplay';
 import ImageModal from './components/ImageModal';
+import EmailOTPVerification from './components/EmailOTPVerification';
 import { PRODUCT_CATEGORIES } from './constants';
 import type { Product, ProductType, Base64Image, GenerationResult, GenerationHistoryItem } from './types';
 import { fileToBase64 } from './utils/imageUtils';
 import { generateAdImage } from './services/geminiService';
 import { retryQueue } from './services/retryQueue';
+import { RegenerationService } from './services/regenerationService';
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -82,6 +84,19 @@ const App: React.FC = () => {
   const [generationResults, setGenerationResults] = useState<Record<ProductType, GenerationResult>>(initialResults);
   const [enlargedImageUrl, setEnlargedImageUrl] = useState<string | null>(null);
 
+  // Email/OTP verification state
+  const [showEmailOTP, setShowEmailOTP] = useState<boolean>(false);
+  const [userEmail, setUserEmail] = useState<string>('');
+  const [pendingLogo, setPendingLogo] = useState<File | null>(null);
+  const [pendingLogoBase64, setPendingLogoBase64] = useState<Base64Image | null>(null);
+  const [isVerified, setIsVerified] = useState<boolean>(false);
+  const [sessionId, setSessionId] = useState<string>('');
+  const [sessionDetails, setSessionDetails] = useState<any>(null);
+
+  // Regeneration state
+  const [showRegenerationLimitPopup, setShowRegenerationLimitPopup] = useState<boolean>(false);
+  const [regenerationLimitMessage, setRegenerationLimitMessage] = useState<string>('');
+
   // History and view management state
   const [view, setView] = useState<'generator' | 'history'>('generator');
   const [viewingHistoryId, setViewingHistoryId] = useState<string | null>(null);
@@ -101,6 +116,55 @@ const App: React.FC = () => {
       return [];
     }
   });
+
+  // Load session from localStorage on mount
+  useEffect(() => {
+    try {
+      const storedSession = localStorage.getItem('skylar-session');
+      if (storedSession) {
+        const session = JSON.parse(storedSession);
+        setSessionId(session.sessionId);
+        setSessionDetails(session);
+        setUserEmail(session.email);
+        setIsVerified(true);
+        
+        // Validate session with server
+        fetch('/api/validate-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId: session.sessionId }),
+        }).then(resp => resp.json()).then(data => {
+          if (!data.valid) {
+            // Session invalid, clear it
+            clearSession();
+          }
+        }).catch(err => {
+          console.warn('Failed to validate session:', err);
+          clearSession();
+        });
+      }
+    } catch (error) {
+      console.error("Failed to load session from localStorage", error);
+      clearSession();
+    }
+  }, []);
+
+  const clearSession = () => {
+    setSessionId('');
+    setSessionDetails(null);
+    setUserEmail('');
+    setIsVerified(false);
+    localStorage.removeItem('skylar-session');
+  };
+
+  const storeSession = (sessionId: string, email: string, verifiedAt: string) => {
+    const sessionData = { sessionId, email, verifiedAt };
+    setSessionId(sessionId);
+    setSessionDetails(sessionData);
+    setUserEmail(email);
+    setIsVerified(true);
+    localStorage.setItem('skylar-session', JSON.stringify(sessionData));
+  };
 
   const liveSessionRef = useRef({
     logo: null as File | null,
@@ -182,8 +246,161 @@ const App: React.FC = () => {
         await Promise.all(batch.map(processProduct));
     }
 
+    // After all products processed, attempt to save generated images to server
+    try {
+      // Get current email from state at time of function execution
+      const currentUserEmail = userEmail;
+      const currentSessionDetails = sessionDetails;
+      const emailToUse = currentUserEmail || currentSessionDetails?.email;
+      
+      console.log('=== SAVE IMAGES DEBUG ===');
+      console.log('userEmail:', currentUserEmail);
+      console.log('sessionDetails?.email:', currentSessionDetails?.email);
+      console.log('emailToUse:', emailToUse);
+      
+      if (emailToUse) {
+        const imagesToSave: Array<{ filename: string; data: string }> = [];
+        // Collect successful images from liveSessionRef
+        const resultsSource = liveSessionRef.current.results;
+        for (const p of ALL_PRODUCTS) {
+          const res = resultsSource[p.id];
+          if (res && res.status === 'success' && res.imageUrl) {
+            const filename = `${p.id}.png`;
+            imagesToSave.push({ filename, data: res.imageUrl });
+            console.log(`Added image: ${filename}`);
+          }
+        }
+
+        console.log(`Total images to save: ${imagesToSave.length}`);
+
+        if (imagesToSave.length > 0) {
+          try {
+            console.log('Sending POST to /api/save-images with:', { email: emailToUse, imageCount: imagesToSave.length });
+            const saveResponse = await fetch('/api/save-images', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email: emailToUse, images: imagesToSave }),
+            });
+            const result = await saveResponse.json();
+            console.log('Save images response:', result);
+            if (result.success) {
+              console.log(`✅ Successfully saved ${result.files?.length || 0} images to userbanners/${result.id}/`);
+            } else {
+              console.error('❌ Save failed:', result.error);
+            }
+          } catch (e) {
+            console.error('❌ Failed to save images to server:', e);
+          }
+        } else {
+          console.warn('⚠️ No successful images to save');
+        }
+      } else {
+        console.warn('⚠️ No email available for saving images');
+      }
+    } catch (e) {
+      console.error('Error while preparing images for save:', e);
+    }
+
     setIsGenerating(false);
-  }, []);
+  }, [userEmail, sessionDetails]);
+
+  const handleSaveCurrentImages = useCallback(async () => {
+    const emailToUse = userEmail || sessionDetails?.email;
+    console.log('=== MANUAL SAVE TRIGGERED ===');
+    console.log('Email:', emailToUse);
+    
+    if (!emailToUse) {
+      console.error('❌ No email found. Please verify your email first.');
+      return;
+    }
+
+    const imagesToSave: Array<{ filename: string; data: string }> = [];
+    const resultsSource = generationResults;
+    
+    for (const p of ALL_PRODUCTS) {
+      const res = resultsSource[p.id];
+      if (res && res.status === 'success' && res.imageUrl) {
+        const filename = `${p.id}.png`;
+        imagesToSave.push({ filename, data: res.imageUrl });
+        console.log(`Found image: ${filename}`);
+      }
+    }
+
+    console.log(`Total images found: ${imagesToSave.length}`);
+
+    if (imagesToSave.length === 0) {
+      console.warn('⚠️ No images to save. Generate images first.');
+      return;
+    }
+
+    try {
+      console.log(`Saving ${imagesToSave.length} images to server...`);
+      const saveResponse = await fetch('/api/save-images', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: emailToUse, images: imagesToSave }),
+      });
+      const result = await saveResponse.json();
+      console.log('Save response:', result);
+      
+      if (result.success) {
+        console.log(`✅ SUCCESS! Saved ${result.files?.length || 0} images to userbanners/${result.id}/`);
+        alert(`✅ Successfully saved ${result.files?.length || 0} images to userbanners/${result.id}/`);
+      } else {
+        console.error('❌ Save failed:', result.error);
+        alert(`❌ Failed to save: ${result.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error saving images:', error);
+      alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }, [userEmail, sessionDetails, generationResults]);
+
+  const handleRegenerateAllImages = useCallback(async () => {
+    // Check if user is logged in (has email)
+    console.log('Regenerate button clicked. Current userEmail:', userEmail, 'isVerified:', isVerified);
+    
+    if (!userEmail || userEmail.trim() === '') {
+      console.warn('User email not found or empty. userEmail:', userEmail);
+      setRegenerationLimitMessage('Please verify your email first before regenerating images.');
+      setShowRegenerationLimitPopup(true);
+      return;
+    }
+
+    if (!userLogoBase64 || !userLogo) {
+      console.warn('Logo not found. Please upload a logo first.');
+      return;
+    }
+
+    try {
+      console.log('Checking regeneration limit for email:', userEmail);
+      // Check regeneration limit from database
+      const checkResult = await RegenerationService.checkRegenerationLimit(userEmail);
+      console.log('Regeneration check result:', checkResult);
+      
+      if (!checkResult.canRegenerate) {
+        setRegenerationLimitMessage(`You have reached the maximum regeneration limit (${checkResult.regenerationCount}/${checkResult.maxRegenerations})`);
+        setShowRegenerationLimitPopup(true);
+        return;
+      }
+
+      // Increment regeneration count and get permission to regenerate
+      console.log('Incrementing regeneration count for email:', userEmail);
+      await RegenerationService.incrementRegenerationCount(userEmail);
+
+      // Regenerate all images
+      console.log('Starting image regeneration...');
+      await handleGenerateAllImages(userLogoBase64, userLogo);
+    } catch (error) {
+      console.error('Error during regeneration:', error);
+      if (error instanceof Error && error.message.includes('limit reached')) {
+        setRegenerationLimitMessage(`Regeneration limit exceeded. Please contact support if you need more regenerations.`);
+      } else {
+        setRegenerationLimitMessage(`Error during regeneration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+      setShowRegenerationLimitPopup(true);
+    }
+  }, [userEmail, isVerified, userLogoBase64, userLogo, handleGenerateAllImages]);
 
   const handleRegenerateImage = useCallback(async (productId: ProductType) => {
     if (!userLogoBase64 || viewingHistoryId) return;
@@ -217,11 +434,11 @@ const App: React.FC = () => {
     if (file) {
       try {
         const base64Image = await fileToBase64(file);
-        setUserLogo(file);
-        setUserLogoBase64(base64Image);
-        setViewingHistoryId(null);
-        liveSessionRef.current = { logo: file, logoBase64: base64Image, results: initialResults };
-        handleGenerateAllImages(base64Image, file);
+        // Store the uploaded file temporarily
+        setPendingLogo(file);
+        setPendingLogoBase64(base64Image);
+        // Show email OTP verification popup
+        setShowEmailOTP(true);
       } catch (e) {
         console.error("Could not read the selected file.", e);
         setUserLogo(null);
@@ -229,6 +446,41 @@ const App: React.FC = () => {
       }
     }
     if(event.target) event.target.value = '';
+  };
+
+  const handleEmailVerified = async () => {
+    // Note: This is called after successful OTP verification
+    // The session should already be stored by the EmailOTPVerification component
+    setIsVerified(true);
+    // Keep userEmail after verification - important for regeneration limit checks
+    // Move pending data to actual state
+    if (pendingLogo && pendingLogoBase64) {
+      setUserLogo(pendingLogo);
+      setUserLogoBase64(pendingLogoBase64);
+      setViewingHistoryId(null);
+      liveSessionRef.current = { logo: pendingLogo, logoBase64: pendingLogoBase64, results: initialResults };
+      
+      // Use currentEmail to avoid stale closure issues
+      const currentEmail = userEmail;
+      console.log('Email verified. Current email:', currentEmail, 'userEmail state:', userEmail);
+      
+      // Start image generation with explicit email parameter
+      await handleGenerateAllImages(pendingLogoBase64, pendingLogo);
+    }
+    // Clear pending data but keep userEmail
+    setPendingLogo(null);
+    setPendingLogoBase64(null);
+  };
+
+  const handleCloseEmailOTP = () => {
+    setShowEmailOTP(false);
+    // Clear pending data
+    setPendingLogo(null);
+    setPendingLogoBase64(null);
+    // Only clear email if not verified yet
+    if (!isVerified) {
+      setUserEmail('');
+    }
   };
 
   const handleLoadHistoryItem = (item: GenerationHistoryItem) => {
@@ -255,6 +507,15 @@ const App: React.FC = () => {
     setViewingHistoryId(null);
   };
 
+  // Expose save function to window for manual trigger
+  useEffect(() => {
+    (window as any).saveCurrentImages = handleSaveCurrentImages;
+    console.log('💾 Manual save available: Run saveCurrentImages() in console');
+    return () => {
+      delete (window as any).saveCurrentImages;
+    };
+  }, [handleSaveCurrentImages]);
+
   return (
     <div className="h-screen w-screen flex font-sans">
       <Sidebar productCategories={PRODUCT_CATEGORIES} />
@@ -267,6 +528,7 @@ const App: React.FC = () => {
         userLogo={userLogo}
         onImageClick={handleImageClick}
         onRegenerate={handleRegenerateImage}
+        onRegenerateAll={handleRegenerateAllImages}
         isViewingHistory={!!viewingHistoryId}
         onShowHistory={() => setView('history')}
         onBackToCurrent={handleBackToCurrent}
@@ -282,6 +544,30 @@ const App: React.FC = () => {
         accept="image/png, image/jpeg, image/webp"
       />
       <ImageModal imageUrl={enlargedImageUrl} onClose={handleCloseModal} />
+      <EmailOTPVerification
+        isOpen={showEmailOTP}
+        onClose={handleCloseEmailOTP}
+        onVerified={handleEmailVerified}
+        userEmail={userEmail}
+        setUserEmail={setUserEmail}
+        onSessionStored={storeSession}
+      />
+      
+      {/* Regeneration Limit Popup */}
+      {showRegenerationLimitPopup && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-sm mx-4 shadow-xl">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">⚠️ Regeneration Limit Reached</h2>
+            <p className="text-gray-600 mb-6">{regenerationLimitMessage}</p>
+            <button
+              onClick={() => setShowRegenerationLimitPopup(false)}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              OK
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -226,19 +226,40 @@ const startupLogPlugin = {
             return;
           }
 
-          // Generate OTP
-          const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-          // Upsert into email_verification
-          const now = new Date();
-          const sql = `INSERT INTO email_verification (email, otp, is_verified, attempt_count, max_attempts, regeneration_count, max_regenerations, status, last_sent_at, created_at, updated_at)
-            VALUES (?, ?, false, 0, 5, 0, 3, 'pending', ?, ?, ?)
-            ON DUPLICATE KEY UPDATE otp=VALUES(otp), attempt_count=0, status='pending', last_sent_at=VALUES(last_sent_at), updated_at=VALUES(updated_at)`;
-
           const conn = await pool.getConnection();
+          let otp = '';
           try {
             // Ensure schema is ready
             await ensureSchema(conn);
+
+            // Check if email already exists and is verified
+            const [existingRows] = await conn.query(
+              'SELECT id, is_verified, status FROM email_verification WHERE email = ? LIMIT 1',
+              [email]
+            );
+            
+            if (existingRows && (existingRows as any[]).length > 0) {
+              const existingUser = (existingRows as any[])[0];
+              if (existingUser.is_verified === 1 || existingUser.status === 'verified') {
+                conn.release();
+                res.statusCode = 400;
+                res.end(JSON.stringify({ 
+                  error: 'This email has already been used and verified. Please use a different email address.',
+                  alreadyUsed: true 
+                }));
+                return;
+              }
+            }
+
+            // Generate OTP
+            otp = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Upsert into email_verification
+            const now = new Date();
+            const sql = `INSERT INTO email_verification (email, otp, is_verified, attempt_count, max_attempts, regeneration_count, max_regenerations, status, last_sent_at, created_at, updated_at)
+              VALUES (?, ?, false, 0, 5, 0, 3, 'pending', ?, ?, ?)
+              ON DUPLICATE KEY UPDATE otp=VALUES(otp), attempt_count=0, status='pending', last_sent_at=VALUES(last_sent_at), updated_at=VALUES(updated_at)`;
+
             await conn.query(sql, [email, otp, now, now, now]);
           } finally {
             conn.release();

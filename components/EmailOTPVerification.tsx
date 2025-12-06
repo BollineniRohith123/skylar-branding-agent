@@ -47,7 +47,13 @@ const EmailOTPVerification: React.FC<EmailOTPVerificationProps> = ({
         body: JSON.stringify({ email: userEmail }),
       });
       const data = await resp.json();
-      if (!resp.ok) throw new Error(data.error || 'Failed to send OTP');
+      if (!resp.ok) {
+        // Check if it's an "already used" error
+        if (data.alreadyUsed) {
+          throw new Error('⚠️ This email has already been used and verified. Please use a different email address.');
+        }
+        throw new Error(data.error || 'Failed to send OTP');
+      }
       // Switch to OTP entry step
       setCurrentStep('otp');
     } catch (err) {

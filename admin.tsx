@@ -11,6 +11,14 @@ document.body.style.margin = '0';
 document.body.style.padding = '0';
 document.body.style.fontFamily = 'system-ui, -apple-system, sans-serif';
 
+// Check authentication
+const adminToken = localStorage.getItem('adminToken');
+if (!adminToken) {
+  // Redirect to login page
+  window.location.href = '/admin-login';
+  throw new Error('Not authenticated');
+}
+
 // Parse URL to determine which page to show
 const path = window.location.pathname;
 let currentPage: React.ReactNode;

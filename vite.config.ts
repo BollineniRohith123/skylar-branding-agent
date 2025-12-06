@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import crypto from 'crypto';
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import mysql from 'mysql2/promise';
@@ -205,6 +206,11 @@ const startupLogPlugin = {
           }
         }
 
+        // Handle /admin-login route
+        if (req.url === '/admin-login' || req.url === '/admin-login/') {
+          req.url = '/admin-login.html';
+        }
+
         // Handle /admin routes - serve admin.html without redirect
         if (req.url === '/admin' || req.url === '/admin/' || req.url?.startsWith('/admin/user/')) {
           req.url = '/admin.html';
@@ -254,6 +260,77 @@ const startupLogPlugin = {
             } else {
               throw err;
             }
+          }
+        }
+
+        // Ensure superadmin table exists
+        async function ensureSuperadminTable(conn) {
+          try {
+            const createSuperadminSql = `CREATE TABLE IF NOT EXISTS superadmin (
+              id INT AUTO_INCREMENT PRIMARY KEY,
+              email VARCHAR(255) NOT NULL UNIQUE,
+              password VARCHAR(255) NOT NULL,
+              name VARCHAR(255) DEFAULT 'Super Admin',
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            );`;
+            await conn.query(createSuperadminSql);
+
+            // Insert default superadmin if not exists
+            const [rows]: any = await conn.query('SELECT COUNT(*) as count FROM superadmin WHERE email = ?', ['superadmin@gmail.com']);
+            if (rows[0].count === 0) {
+              const hashedPassword = crypto.createHash('sha256').update('superadmin').digest('hex');
+              await conn.query('INSERT INTO superadmin (email, password, name) VALUES (?, ?, ?)', 
+                ['superadmin@gmail.com', hashedPassword, 'Super Admin']);
+            }
+          } catch (err) {
+            console.error('Error ensuring superadmin table:', err);
+          }
+        }
+
+        // Admin Login API
+        if (req.url === '/api/admin/login' && req.method === 'POST') {
+          const body = await readBody(req);
+          const { email, password } = body as any;
+
+          if (!email || !password) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Email and password required' }));
+            return;
+          }
+
+          const conn = await pool.getConnection();
+          try {
+            await ensureSuperadminTable(conn);
+
+            // Hash the password
+            const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+
+            // Check credentials
+            const [rows]: any = await conn.query(
+              'SELECT id, email, name FROM superadmin WHERE email = ? AND password = ?',
+              [email, hashedPassword]
+            );
+
+            if (!rows || rows.length === 0) {
+              res.statusCode = 401;
+              res.end(JSON.stringify({ error: 'Invalid email or password' }));
+              return;
+            }
+
+            // Generate a simple token (in production, use JWT)
+            const token = crypto.randomBytes(32).toString('hex');
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ 
+              success: true, 
+              token, 
+              email: rows[0].email,
+              name: rows[0].name 
+            }));
+            return;
+          } finally {
+            conn.release();
           }
         }
 

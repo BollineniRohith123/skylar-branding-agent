@@ -12,6 +12,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: HomeIcon, path: '/admin' },
     { id: 'users', label: 'Users', icon: UsersIcon, path: '/admin/users' },
+    { id: 'settings', label: 'Settings', icon: SettingsIcon, path: '/admin/settings' },
   ];
 
   // Determine current page from URL if not explicitly set
@@ -19,6 +20,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children, currentPage }) => {
     const path = window.location.pathname;
     if (path === '/admin' || path === '/admin/') return 'dashboard';
     if (path.startsWith('/admin/users')) return 'users';
+    if (path.startsWith('/admin/settings')) return 'settings';
     return currentPage;
   };
 

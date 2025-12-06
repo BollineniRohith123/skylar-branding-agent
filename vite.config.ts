@@ -212,7 +212,7 @@ const startupLogPlugin = {
         }
 
         // Handle /admin routes - serve admin.html without redirect
-        if (req.url === '/admin' || req.url === '/admin/' || req.url === '/admin/users' || req.url === '/admin/users/' || req.url?.startsWith('/admin/user/')) {
+        if (req.url === '/admin' || req.url === '/admin/' || req.url === '/admin/users' || req.url === '/admin/users/' || req.url === '/admin/settings' || req.url === '/admin/settings/' || req.url?.startsWith('/admin/user/')) {
           req.url = '/admin.html';
         }
 
@@ -328,6 +328,66 @@ const startupLogPlugin = {
               email: rows[0].email,
               name: rows[0].name 
             }));
+            return;
+          } finally {
+            conn.release();
+          }
+        }
+
+        // Change Admin Password API
+        if (req.url === '/api/admin/change-password' && req.method === 'POST') {
+          const body = await readBody(req);
+          const { email, currentPassword, newPassword } = body as any;
+
+          if (!email || !currentPassword || !newPassword) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Email, current password, and new password are required' }));
+            return;
+          }
+
+          if (newPassword.length < 6) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'New password must be at least 6 characters long' }));
+            return;
+          }
+
+          const conn = await pool.getConnection();
+          try {
+            await ensureSuperadminTable(conn);
+
+            // Hash the current password
+            const hashedCurrentPassword = crypto.createHash('sha256').update(currentPassword).digest('hex');
+
+            // Verify current password
+            const [rows]: any = await conn.query(
+              'SELECT id FROM superadmin WHERE email = ? AND password = ?',
+              [email, hashedCurrentPassword]
+            );
+
+            if (!rows || rows.length === 0) {
+              res.statusCode = 401;
+              res.end(JSON.stringify({ error: 'Current password is incorrect' }));
+              return;
+            }
+
+            // Hash the new password
+            const hashedNewPassword = crypto.createHash('sha256').update(newPassword).digest('hex');
+
+            // Update password
+            await conn.query(
+              'UPDATE superadmin SET password = ?, updated_at = NOW() WHERE email = ?',
+              [hashedNewPassword, email]
+            );
+
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ 
+              success: true,
+              message: 'Password updated successfully'
+            }));
+            return;
+          } catch (err) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Failed to update password' }));
             return;
           } finally {
             conn.release();

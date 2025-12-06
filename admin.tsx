@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import DashboardPage from './components/admin/DashboardPage';
 import UsersPage from './components/admin/UsersPage';
 import UserImagesPage from './components/admin/UserImagesPage';
+import SettingsPage from './components/admin/SettingsPage';
 import './index.css';
 
 // Add background styles to document
@@ -34,6 +35,9 @@ if (path.startsWith('/admin/user/')) {
 } else if (path === '/admin/users' || path === '/admin/users/') {
   // Users page
   currentPage = <UsersPage />;
+} else if (path === '/admin/settings' || path === '/admin/settings/') {
+  // Settings page
+  currentPage = <SettingsPage />;
 } else {
   // Default to dashboard
   currentPage = <DashboardPage />;
